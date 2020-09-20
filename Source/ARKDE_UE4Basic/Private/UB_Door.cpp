@@ -8,8 +8,8 @@ AUB_Door::AUB_Door()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	CustomRootComponent = CreateDefaultSubobject<USceneComponent>("CustomRoot1");
-	CustomRootComponent = RootComponent;
+	CustomRootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("CustomRoot")); //returns pointer
+	RootComponent = CustomRootComponent; //both are pointers, RootComponent default of unreal will be our customRootComponent
 
 	DoorFrameComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DoorFrame"));
 	DoorFrameComponent->SetupAttachment(CustomRootComponent);
@@ -31,7 +31,6 @@ void AUB_Door::BeginPlay()
 void AUB_Door::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void AUB_Door::OpenDoor()
