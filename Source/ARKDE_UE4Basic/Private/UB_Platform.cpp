@@ -38,6 +38,7 @@ void AUB_Platform::Tick(float DeltaTime)
 void AUB_Platform::Move()
 {
 	FVector upDirection = UKismetMathLibrary::GetUpVector(GetActorRotation());
+	//FVector upDirection = GetActorUpVector(); ?
 	if (!bIsGoingUp)
 		upDirection *= -1;
 
