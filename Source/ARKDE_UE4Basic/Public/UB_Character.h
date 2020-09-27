@@ -6,15 +6,24 @@
 #include "GameFramework/Character.h"
 #include "UB_Character.generated.h"
 
+class UCameraComponent;
+
 UCLASS()
 class ARKDE_UE4BASIC_API AUB_Character : public ACharacter
 {
 	GENERATED_BODY()
 
+//Components
+protected: 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+		UCameraComponent* FPSCameraComponent;
+
 //Variables
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Aiming")
 		bool bIsInvertedLook;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Aiming")
+		FName FPSCameraSocketName;
 
 //Functions
 public:

@@ -1,7 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "UB_Character.h"
+#include "Camera/CameraComponent.h"
+#include "Components/InputComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+
 
 // Sets default values
 AUB_Character::AUB_Character()
@@ -9,6 +12,10 @@ AUB_Character::AUB_Character()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	FPSCameraSocketName = "SCK_FPSCamera";
+	FPSCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FPS_CameraComponent"));
+	FPSCameraComponent->bUsePawnControlRotation = true; 
+	FPSCameraComponent->SetupAttachment(GetMesh(), FPSCameraSocketName); //Needs to be son of the mesh to be able to be in the socket
 }
 
 // Called when the game starts or when spawned
