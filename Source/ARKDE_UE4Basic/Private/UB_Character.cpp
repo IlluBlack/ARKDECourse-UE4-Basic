@@ -2,6 +2,7 @@
 
 #include "UB_Character.h"
 #include "Camera/CameraComponent.h"
+#include "GameFramework/SpringArmComponent.h"
 #include "Components/InputComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 
@@ -12,10 +13,18 @@ AUB_Character::AUB_Character()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	bUseFirstPersonView = true;
+	bIsInvertedLook = false;
+
 	FPSCameraSocketName = "SCK_FPSCamera";
 	FPSCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FPS_CameraComponent"));
 	FPSCameraComponent->bUsePawnControlRotation = true; 
 	FPSCameraComponent->SetupAttachment(GetMesh(), FPSCameraSocketName); //Needs to be son of the mesh to be able to be in the socket
+
+	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComponent")); //to make TPS camera rotate with player as pivot
+	SpringArmComponent->bUsePawnControlRotation = true;
+	TPSCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("TPS_CameraComponent"));
+	TPSCameraComponent->SetupAttachment(SpringArmComponent);
 }
 
 // Called when the game starts or when spawned

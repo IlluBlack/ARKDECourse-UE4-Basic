@@ -7,6 +7,7 @@
 #include "UB_Character.generated.h"
 
 class UCameraComponent;
+class USpringArmComponent;
 
 UCLASS()
 class ARKDE_UE4BASIC_API AUB_Character : public ACharacter
@@ -17,9 +18,15 @@ class ARKDE_UE4BASIC_API AUB_Character : public ACharacter
 protected: 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		UCameraComponent* FPSCameraComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+		USpringArmComponent* SpringArmComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+		UCameraComponent* TPSCameraComponent;
 
 //Variables
 protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Aiming")
+		bool bUseFirstPersonView;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Aiming")
 		bool bIsInvertedLook;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Aiming")
