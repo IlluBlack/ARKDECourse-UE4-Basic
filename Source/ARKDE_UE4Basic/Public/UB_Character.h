@@ -9,6 +9,15 @@
 class UCameraComponent;
 class USpringArmComponent;
 
+UENUM(BlueprintType)
+enum class EMovementState : uint8
+{
+	Standing,
+	Falling,
+	Crouching,
+	Sliding,
+};
+
 UCLASS()
 class ARKDE_UE4BASIC_API AUB_Character : public ACharacter
 {
@@ -17,20 +26,40 @@ class ARKDE_UE4BASIC_API AUB_Character : public ACharacter
 //Components
 protected: 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-		UCameraComponent* FPSCameraComponent;
+	UCameraComponent* FPSCameraComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-		USpringArmComponent* SpringArmComponent;
+	USpringArmComponent* TPSSpringArmComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-		UCameraComponent* TPSCameraComponent;
+	UCameraComponent* TPSCameraComponent;
 
 //Variables
+private: //these ones are used just for internal logic
+	UPROPERTY(VisibleAnywhere, Category = "Movement Input")
+		bool bIsPressingSprint;
+	UPROPERTY(VisibleAnywhere, Category = "Movement Input")
+		bool bToggleSprintState;
+	UPROPERTY(VisibleAnywhere, Category = "Movement Input")
+		bool bIsPressingCrouchOrSlide;
+
 protected:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Aiming")
-		bool bUseFirstPersonView;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Aiming")
-		bool bIsInvertedLook;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Aiming")
-		FName FPSCameraSocketName;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera")
+	bool bUseFirstPersonView;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera")
+	bool bIsInvertedLook;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera")
+	FName FPSCameraSocketName;
+	//UPROPERTY(BlueprintReadOnly, Category = "Camera")
+	//float StandingCapsuleHeight; //the one setted in the BP
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
+	EMovementState ECurrentMovementState;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
+	bool bUseHoldToSprint;
+	UPROPERTY(BlueprintReadOnly, Category = "Movement", meta = (ClampMin = "0", UIMin = "0"))
+	float MaxWalkSpeed; //the one setted in character movement
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement", meta = (ClampMin = "0", UIMin = "0"))
+	float MaxRunSpeed;
+	
 
 //Functions
 public:
@@ -44,10 +73,24 @@ protected:
 	void MoveForward(float value);
 	void MoveRight(float value);
 
+	virtual void AddControllerPitchInput(float value) override;
+
 	virtual void Jump() override;
 	virtual void StopJumping() override;
 
-	virtual void AddControllerPitchInput(float value) override;
+	void Sprint();
+	void StopSprinting();
+
+	virtual void Falling() override;
+	virtual void Landed(const FHitResult& Hit) override;
+
+	void CrouchOrSlide();
+	void Crouch();
+	void StopCrouching();
+	void Slide();
+
+	void ResetMaxMovementSpeed();
+	void ResolveMovement();
 
 public:	
 	// Called every frame

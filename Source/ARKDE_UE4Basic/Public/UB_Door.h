@@ -17,13 +17,13 @@ class ARKDE_UE4BASIC_API AUB_Door : public AActor
 //Components
 public:
 	UPROPERTY(VisibleAnywhere, Category = "Components")
-		USceneComponent* CustomRootComponent;
+	USceneComponent* CustomRootComponent;
 	UPROPERTY(VisibleAnywhere, Category = "Components")
-		UStaticMeshComponent* DoorFrameComponent;
+	UStaticMeshComponent* DoorFrameComponent;
 	UPROPERTY(VisibleAnywhere, Category = "Components")
-		UStaticMeshComponent* DoorComponent;
+	UStaticMeshComponent* DoorComponent;
 	UPROPERTY(EditAnywhere, Category = "Door")
-		float OpenAngle;
+	float OpenAngle;
 
 //Functions
 public:	

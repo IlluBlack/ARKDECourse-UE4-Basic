@@ -15,20 +15,20 @@ class ARKDE_UE4BASIC_API AUB_Platform : public AActor
 //Components
 public:
 	UPROPERTY(VisibleAnywhere, Category = "Components")
-		USceneComponent* CustomRootComponent;
+	USceneComponent* CustomRootComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadonly, Category = "Components")
-		UStaticMeshComponent* PlatformMeshComponent;
+	UStaticMeshComponent* PlatformMeshComponent;
 
 //Variables
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Platform")
-		bool bIsGoingUp;
+	bool bIsGoingUp;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Platform")
-		float Speed;
+	float Speed;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Platform")
-		float MinHeight;
+	float MinHeight;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Platform")
-		float MaxHeight;
+	float MaxHeight;
 
 //Functions
 public:	
