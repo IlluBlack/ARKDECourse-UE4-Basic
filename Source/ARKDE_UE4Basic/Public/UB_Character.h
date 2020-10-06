@@ -35,11 +35,11 @@ protected:
 //Variables
 private: //these ones are used just for internal logic
 	UPROPERTY(VisibleAnywhere, Category = "Movement Input")
-		bool bIsPressingSprint;
+	bool bIsPressingSprint;
 	UPROPERTY(VisibleAnywhere, Category = "Movement Input")
-		bool bToggleSprintState;
+	bool bToggleSprintState;
 	UPROPERTY(VisibleAnywhere, Category = "Movement Input")
-		bool bIsPressingCrouchOrSlide;
+	bool bIsPressingCrouchOrSlide;
 
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera")
@@ -55,10 +55,21 @@ protected:
 	EMovementState ECurrentMovementState;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
 	bool bUseHoldToSprint;
-	UPROPERTY(BlueprintReadOnly, Category = "Movement", meta = (ClampMin = "0", UIMin = "0"))
+	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	float MaxWalkSpeed; //the one setted in character movement
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement", meta = (ClampMin = "0", UIMin = "0"))
 	float MaxRunSpeed;
+	UPROPERTY(BlueprintReadOnly, Category = "Movement")
+	float MaxCrouchSpeed; //the one setted in character movement
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement", meta = (ClampMin = "0", UIMin = "0"))
+	float MaxSlideSpeed;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement", meta = (ClampMin = "0", UIMin = "0"))
+	float MinDurationSlide; //if velocity is maxWalkSpeed what's the duration of sliding
+	UPROPERTY(BlueprintReadOnly, Category = "Movement")
+	float CurrentSlidingTime;
+	UPROPERTY(BlueprintReadOnly, Category = "Movement")
+	float DurationSlide;
 	
 
 //Functions
@@ -85,9 +96,13 @@ protected:
 	virtual void Landed(const FHitResult& Hit) override;
 
 	void CrouchOrSlide();
+	void StopCrouchingOrSliding();
+
 	void Crouch();
 	void StopCrouching();
+
 	void Slide();
+	void StopSliding();
 
 	void ResetMaxMovementSpeed();
 	void ResolveMovement();

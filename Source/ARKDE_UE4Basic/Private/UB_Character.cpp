@@ -31,6 +31,8 @@ AUB_Character::AUB_Character()
 
 	bUseHoldToSprint = true;
 	MaxRunSpeed = 800;
+	MaxSlideSpeed = 1000;
+	MinDurationSlide = 1.0f;
 }
 
 // Called when the game starts or when spawned
@@ -39,6 +41,7 @@ void AUB_Character::BeginPlay()
 	Super::BeginPlay();
 	
 	MaxWalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
+	MaxCrouchSpeed = GetCharacterMovement()->MaxWalkSpeedCrouched;
 	//StandingCapsuleHeight = GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
 
 	ECurrentMovementState = EMovementState::Standing;
@@ -53,6 +56,15 @@ void AUB_Character::BeginPlay()
 void AUB_Character::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	//Counter to finish sliding
+	if (ECurrentMovementState == EMovementState::Sliding) {
+		CurrentSlidingTime += DeltaTime;
+
+		if (CurrentSlidingTime >= DurationSlide) {
+			StopSliding();
+		}
+	}
 
 }
 
@@ -74,7 +86,7 @@ void AUB_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &AUB_Character::StopSprinting);
 
 	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &AUB_Character::CrouchOrSlide);
-	PlayerInputComponent->BindAction("Crouch", IE_Released, this, &AUB_Character::StopCrouching);
+	PlayerInputComponent->BindAction("Crouch", IE_Released, this, &AUB_Character::StopCrouchingOrSliding);
 }
 
 //Move
@@ -96,8 +108,7 @@ void AUB_Character::AddControllerPitchInput(float value)
 //Jump
 void AUB_Character::Jump()
 {
-	if (ECurrentMovementState == EMovementState::Crouching) //uncrouch and then jump
-		StopCrouching();
+	StopCrouchingOrSliding(); //uncrouch and then jump
 
 	Super::Jump();
 }
@@ -141,8 +152,17 @@ void AUB_Character::Landed(const FHitResult& Hit)
 void AUB_Character::CrouchOrSlide()
 {
 	bIsPressingCrouchOrSlide = true;
-
 	ResolveMovement();
+}
+
+void AUB_Character::StopCrouchingOrSliding()
+{
+	bIsPressingCrouchOrSlide = false;
+
+	if (ECurrentMovementState == EMovementState::Crouching)
+		StopCrouching();
+	else if (ECurrentMovementState == EMovementState::Sliding)
+		StopSliding();
 }
 
 //Crouch
@@ -156,32 +176,40 @@ void AUB_Character::Crouch()
 }
 void AUB_Character::StopCrouching()
 {
-	bIsPressingCrouchOrSlide = false;
-
-	if (ECurrentMovementState == EMovementState::Crouching) { //Just when is actually crouching
-		Super::UnCrouch(true);
+	Super::UnCrouch(true);
 		
-		ECurrentMovementState = EMovementState::Standing;
-		
-		//GetCapsuleComponent()->SetCapsuleHalfHeight(StandingCapsuleHeight, true);
-		ResolveMovement();
-	}
+	ECurrentMovementState = EMovementState::Standing;
+	//GetCapsuleComponent()->SetCapsuleHalfHeight(StandingCapsuleHeight, true);
+	ResolveMovement();
 }
 
 //Slide
 void AUB_Character::Slide()
 {
-	//Get current direction and slide in that direction
-	//ECurrentMovementState = EMovementState::Sliding;
-	
+	//TODO:
 	//Verify if it's not going backwards, just slide when forward
 	//FVector currentDirection = GetVelocity().GetSafeNormal();
-
 	//GetActorForwardVector();
 
-	//first crouch
+	//First crouch
+	Crouch();
+	//as this crouch is controlled by character movement change max crouch speed
+	GetCharacterMovement()->MaxWalkSpeedCrouched = MaxSlideSpeed;
 
 	//then slide
+	float currentSpeed = GetVelocity().Size(); //magnitude
+	DurationSlide = (currentSpeed*MinDurationSlide)/MaxWalkSpeed;
+	CurrentSlidingTime = 0;
+
+	ECurrentMovementState = EMovementState::Sliding;
+}
+
+void AUB_Character::StopSliding()
+{
+	bIsPressingCrouchOrSlide = false; //Not allow player to continue sliding, if the time was over
+	StopCrouching(); //Slide is actually collide as crouching then stop crouching
+
+	GetCharacterMovement()->MaxWalkSpeedCrouched = MaxCrouchSpeed; //return crouch speed to its default value
 }
 
 
