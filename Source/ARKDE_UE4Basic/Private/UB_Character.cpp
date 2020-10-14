@@ -10,6 +10,8 @@
 #include "Components/CapsuleComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 
+#include "UB_CharacterInventory.h"
+
 // Sets default values
 AUB_Character::AUB_Character()
 {
@@ -28,6 +30,8 @@ AUB_Character::AUB_Character()
 	TPSSpringArmComponent->bUsePawnControlRotation = true;
 	TPSCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("TPS_CameraComponent"));
 	TPSCameraComponent->SetupAttachment(TPSSpringArmComponent);
+
+	Inventory = NewObject<UUB_CharacterInventory>();
 
 	bUseHoldToSprint = true;
 	MaxRunSpeed = 800;
@@ -137,6 +141,8 @@ void AUB_Character::StopSprinting()
 //Fall
 void AUB_Character::Falling()
 {
+	StopCrouchingOrSliding(); //stop this to return collider to its size
+
 	Super::Falling();
 
 	ECurrentMovementState = EMovementState::Falling;
@@ -228,7 +234,10 @@ void AUB_Character::ResolveMovement() //Reset, if user pressed keys or was press
 			}
 			else {
 				if (bToggleSprintState) {
-					Slide();
+					if (GetVelocity().Size() > MaxWalkSpeed) //if it's actually running
+						Slide();
+					else
+						Crouch();
 				}
 				else {
 					Crouch();
@@ -263,4 +272,11 @@ void AUB_Character::ResetMaxMovementSpeed()
 	if (updateSpeed) {
 		GetCharacterMovement()->MaxWalkSpeed = currentMaxSpeed;
 	}
+}
+
+//Launch
+void AUB_Character::LaunchCharacter(FVector LaunchVelocity, bool bXYOverride, bool bZOverride)
+{
+	//Maybe add here some specific thing if I need it
+	Super::LaunchCharacter(LaunchVelocity, bXYOverride, bZOverride);
 }

@@ -8,6 +8,7 @@
 //Forward declaration
 class USceneComponent;
 class UStaticMeshComponent;
+class UBoxComponent;
 
 UCLASS()
 class ARKDE_UE4BASIC_API AUB_Door : public AActor
@@ -15,15 +16,25 @@ class ARKDE_UE4BASIC_API AUB_Door : public AActor
 	GENERATED_BODY()
 
 //Components
-public:
-	UPROPERTY(VisibleAnywhere, Category = "Components")
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USceneComponent* CustomRootComponent;
-	UPROPERTY(VisibleAnywhere, Category = "Components")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UStaticMeshComponent* DoorFrameComponent;
-	UPROPERTY(VisibleAnywhere, Category = "Components")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UStaticMeshComponent* DoorComponent;
-	UPROPERTY(EditAnywhere, Category = "Door")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UBoxComponent* OpenDoorColliderComponent;
+
+
+//Variables
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Door")
 	float OpenAngle;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Door")
+	FName OpenWithKeyTag;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Door")
+	bool bIsOpen;
 
 //Functions
 public:	
@@ -33,6 +44,12 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	UFUNCTION() //binded to delegate
+	void OnCollisionDetected(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
+	void BP_OpenDoor();
 
 public:	
 	// Called every frame

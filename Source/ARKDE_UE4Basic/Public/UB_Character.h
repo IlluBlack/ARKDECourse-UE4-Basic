@@ -8,6 +8,7 @@
 
 class UCameraComponent;
 class USpringArmComponent;
+class UUB_CharacterInventory;
 
 UENUM(BlueprintType)
 enum class EMovementState : uint8
@@ -70,7 +71,10 @@ protected:
 	float CurrentSlidingTime;
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	float DurationSlide;
-	
+
+public:
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
+	UUB_CharacterInventory* Inventory;
 
 //Functions
 public:
@@ -110,8 +114,8 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	virtual void LaunchCharacter(FVector LaunchVelocity, bool bXYOverride, bool bZOverride) override;
 };
