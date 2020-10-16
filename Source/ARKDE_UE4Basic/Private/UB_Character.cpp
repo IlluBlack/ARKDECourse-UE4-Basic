@@ -1,6 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "UB_Character.h"
+#include "UB_CharacterInventory.h"
+#include "Weapons/UB_Weapon.h"
 
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -9,8 +11,6 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/KismetMathLibrary.h"
-
-#include "UB_CharacterInventory.h"
 
 // Sets default values
 AUB_Character::AUB_Character()
@@ -31,8 +31,6 @@ AUB_Character::AUB_Character()
 	TPSCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("TPS_CameraComponent"));
 	TPSCameraComponent->SetupAttachment(TPSSpringArmComponent);
 
-	Inventory = NewObject<UUB_CharacterInventory>();
-
 	bUseHoldToSprint = true;
 	MaxRunSpeed = 800;
 	MaxSlideSpeed = 1000;
@@ -43,6 +41,10 @@ AUB_Character::AUB_Character()
 void AUB_Character::BeginPlay()
 {
 	Super::BeginPlay();
+
+	//Inventory = NewObject<UUB_CharacterInventory>(); //not now, using TSubclassOf
+	CreateInventory();
+	CreateInitialWeapon();
 	
 	MaxWalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
 	MaxCrouchSpeed = GetCharacterMovement()->MaxWalkSpeedCrouched;
@@ -54,6 +56,9 @@ void AUB_Character::BeginPlay()
 	bToggleSprintState = false;
 	bIsPressingCrouchOrSlide = false;
 	ResetMaxMovementSpeed();
+
+	//Always at the end
+	VerifyData();
 }
 
 // Called every frame
@@ -91,6 +96,9 @@ void AUB_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 
 	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &AUB_Character::CrouchOrSlide);
 	PlayerInputComponent->BindAction("Crouch", IE_Released, this, &AUB_Character::StopCrouchingOrSliding);
+
+	PlayerInputComponent->BindAction("WeaponAction", IE_Pressed, this, &AUB_Character::StartWeaponAction);
+	PlayerInputComponent->BindAction("WeaponAction", IE_Released, this, &AUB_Character::StopWeaponAction);
 }
 
 //Move
@@ -218,7 +226,6 @@ void AUB_Character::StopSliding()
 	GetCharacterMovement()->MaxWalkSpeedCrouched = MaxCrouchSpeed; //return crouch speed to its default value
 }
 
-
 //Movement
 void AUB_Character::ResolveMovement() //Reset, if user pressed keys or was pressing
 {
@@ -279,4 +286,43 @@ void AUB_Character::LaunchCharacter(FVector LaunchVelocity, bool bXYOverride, bo
 {
 	//Maybe add here some specific thing if I need it
 	Super::LaunchCharacter(LaunchVelocity, bXYOverride, bZOverride);
+}
+
+//Inventory
+void AUB_Character::CreateInventory()
+{
+	if (IsValid(InventoryClass)) {
+		Inventory = InventoryClass->GetDefaultObject<UUB_CharacterInventory>();
+	}
+}
+
+//Weapon
+void AUB_Character::CreateInitialWeapon()
+{
+	if (IsValid(InitialWeaponClass)) {
+		//TODO: Maybe spawn in a socket ?
+		CurrentWeapon = GetWorld()->SpawnActor<AUB_Weapon>(InitialWeaponClass, GetActorLocation(), GetActorRotation());
+		
+	}
+}
+void AUB_Character::StartWeaponAction()
+{
+	if (IsValid(CurrentWeapon)) {
+		CurrentWeapon->StartAction();
+	}
+}
+void AUB_Character::StopWeaponAction()
+{
+	if (IsValid(CurrentWeapon)) {
+		CurrentWeapon->StopAction();
+	}
+}
+
+void AUB_Character::VerifyData()
+{
+	if (!IsValid(CurrentWeapon)) UE_LOG(LogTemp, Warning, TEXT("Current weapon was not defined"));
+	if (!IsValid(Inventory)) UE_LOG(LogTemp, Error, TEXT("Character inventory was not created correctly"));
+
+	if (MaxWalkSpeed <= 0) UE_LOG(LogTemp, Error, TEXT("MaxWalkSpeed setted in CharacterMovementComponent is zero or less than zero"));
+	if (MaxCrouchSpeed <= 0) UE_LOG(LogTemp, Error, TEXT("MaxCrouchSpeed setted in CharacterMovementComponent is zero or less than zero"));
 }

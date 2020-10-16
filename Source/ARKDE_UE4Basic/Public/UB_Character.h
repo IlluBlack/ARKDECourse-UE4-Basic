@@ -9,6 +9,7 @@
 class UCameraComponent;
 class USpringArmComponent;
 class UUB_CharacterInventory;
+class AUB_Weapon;
 
 UENUM(BlueprintType)
 enum class EMovementState : uint8
@@ -72,8 +73,16 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	float DurationSlide;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
+	TSubclassOf<UUB_CharacterInventory> InventoryClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	TSubclassOf<AUB_Weapon> InitialWeaponClass;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
+	AUB_Weapon* CurrentWeapon;
+
 public:
-	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
 	UUB_CharacterInventory* Inventory;
 
 //Functions
@@ -110,6 +119,14 @@ protected:
 
 	void ResetMaxMovementSpeed();
 	void ResolveMovement();
+
+	void CreateInventory();
+
+	void CreateInitialWeapon();
+	void StartWeaponAction();
+	void StopWeaponAction();
+
+	void VerifyData();
 
 public:	
 	// Called every frame
