@@ -15,6 +15,10 @@ AUB_Projectile::AUB_Projectile()
 	ProjectileCollider = CreateDefaultSubobject<USphereComponent>(TEXT("ProjectileCollider"));
 	RootComponent = ProjectileCollider;
 
+	ProjectileCollider->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
+	ProjectileCollider->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap); //overlap with pawns
+	ProjectileCollider->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
 	ProjectileMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ProjectileMeshComponent"));
 	ProjectileMeshComponent->SetupAttachment(ProjectileCollider);
 
