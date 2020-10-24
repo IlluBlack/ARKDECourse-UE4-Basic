@@ -76,6 +76,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	TSubclassOf<UUB_CharacterInventory> InventoryClass;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+	FName WeaponSocketName;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	TSubclassOf<AUB_Weapon> InitialWeaponClass;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
@@ -135,4 +137,8 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	virtual void LaunchCharacter(FVector LaunchVelocity, bool bXYOverride, bool bZOverride) override;
+
+	//GetActorEyesViewPoint() is override for APawn and return in location GetPawnViewLocation() that is actually the eyes of the mesh player
+	//override this function to make eyesViewPoint locate in the current camera
+	virtual FVector GetPawnViewLocation() const override;
 };

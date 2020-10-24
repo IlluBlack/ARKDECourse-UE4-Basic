@@ -6,10 +6,29 @@
 #include "GameFramework/Actor.h"
 #include "UB_Weapon.generated.h"
 
+class ACharacter;
+class UDamageType;
+
 UCLASS()
 class ARKDE_UE4BASIC_API AUB_Weapon : public AActor
 {
 	GENERATED_BODY()
+
+protected:
+	//All weapons in this projects are skeletalMesh, then I am not using UStaticMesh
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	USkeletalMeshComponent* WeaponMeshComponent;
+
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
+	float Damage;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+	TSubclassOf<UDamageType> DamageType;
+
+	ACharacter* CurrentOwnerCharacter;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Muzzle")
+	FName MuzzleSocketName;
 	
 public:	
 	// Sets default values for this actor's properties
@@ -24,6 +43,11 @@ protected:
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Weapon")
 	void BP_StopAction();
 
+	UFUNCTION(BlueprintCallable, Category = "Muzzle")
+	FVector GetMuzzleSocketLocation();
+	UFUNCTION(BlueprintCallable, Category = "Muzzle")
+	FRotator GetMuzzleSocketRotation();
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -32,5 +56,7 @@ public:
 	virtual void StartAction();
 	UFUNCTION(BlueprintCallable)
 	virtual void StopAction();
+	UFUNCTION(BlueprintCallable)
+	void SetCharacterOwner(ACharacter* NewOwner);
 
 };

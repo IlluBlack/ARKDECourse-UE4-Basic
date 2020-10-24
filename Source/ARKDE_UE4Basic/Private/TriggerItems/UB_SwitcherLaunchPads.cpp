@@ -51,8 +51,13 @@ void AUB_SwitcherLaunchPads::OnCharacterOverlap(AUB_Character* Character)
 
 void AUB_SwitcherLaunchPads::ResetLaunchPadsState()
 {
-	for (uint8 launchPadIdx = 0; launchPadIdx < ControlLaunchPads.Num(); launchPadIdx++)
+	for(AUB_LaunchPad* launchPad: ControlLaunchPads)
 	{
-		ControlLaunchPads[launchPadIdx]->SetActive(bIsOn);
+		if (IsValid(launchPad)) {
+			launchPad->SetActive(bIsOn);
+		}
+		else {
+			UE_LOG(LogTemp, Error, TEXT("LauchPad assigned to ControlLauchPads is not valid"));
+		}
 	}
 }

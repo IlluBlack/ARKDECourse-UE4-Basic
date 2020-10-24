@@ -35,6 +35,8 @@ AUB_Character::AUB_Character()
 	MaxRunSpeed = 800;
 	MaxSlideSpeed = 1000;
 	MinDurationSlide = 1.0f;
+
+	WeaponSocketName = "SCK_Weapon";
 }
 
 // Called when the game starts or when spawned
@@ -75,6 +77,23 @@ void AUB_Character::Tick(float DeltaTime)
 		}
 	}
 
+}
+
+//ViewLocation is going to be the camera position
+FVector AUB_Character::GetPawnViewLocation() const
+{
+	if (bUseFirstPersonView) {
+		if (IsValid(FPSCameraComponent)) {
+			return FPSCameraComponent->GetComponentLocation();
+		}
+	}
+	else {
+		if (IsValid(TPSCameraComponent)) {
+			return TPSCameraComponent->GetComponentLocation();
+		}
+	}
+
+	return Super::GetPawnViewLocation();
 }
 
 // Called to bind functionality to input
@@ -301,8 +320,14 @@ void AUB_Character::CreateInitialWeapon()
 {
 	if (IsValid(InitialWeaponClass)) {
 		//TODO: Maybe spawn in a socket ?
-		CurrentWeapon = GetWorld()->SpawnActor<AUB_Weapon>(InitialWeaponClass, GetActorLocation(), GetActorRotation());
+		//CurrentWeapon = GetWorld()->SpawnActor<AUB_Weapon>(InitialWeaponClass, GetActorLocation(), GetActorRotation());
+		CurrentWeapon = GetWorld()->SpawnActor<AUB_Weapon>(InitialWeaponClass);
 		
+		if (IsValid(CurrentWeapon)) {
+			CurrentWeapon->SetCharacterOwner(this);
+			//CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+			CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocketName);
+		}
 	}
 }
 void AUB_Character::StartWeaponAction()
