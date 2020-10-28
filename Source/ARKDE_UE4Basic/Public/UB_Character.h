@@ -127,6 +127,8 @@ protected:
 	void CreateInitialWeapon();
 	void StartWeaponAction();
 	void StopWeaponAction();
+	void ChangeWeaponMode();
+	void ReloadWeapon();
 
 	void VerifyData();
 

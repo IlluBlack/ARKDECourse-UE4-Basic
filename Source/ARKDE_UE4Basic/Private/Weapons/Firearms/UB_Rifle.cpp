@@ -15,9 +15,9 @@ AUB_Rifle::AUB_Rifle()
 	TraceLenght = 10000.0f;
 }
 
-void AUB_Rifle::StartAction()
+void AUB_Rifle::Fire()
 {
-	Super::StartAction();
+	Super::Fire();
 
 	AActor* Owner = GetOwner();
 	if (IsValid(Owner)) {
@@ -47,6 +47,7 @@ void AUB_Rifle::StartAction()
 			}
 
 			ResultTraceEnd = HitResult.ImpactPoint;
+			//Play ImpactEffect
 			if (IsValid(ImpactEffect)) {
 				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactEffect, ResultTraceEnd, HitResult.ImpactNormal.Rotation());
 			}
@@ -56,13 +57,9 @@ void AUB_Rifle::StartAction()
 			DrawDebugLine(GetWorld(), EyeLocation, TraceEnd, FColor::White, false, 1.0f, 0.0f, 1.0f);
 		}
 
-		if (IsValid(MuzzleEffect)) {
-			//AUB_Character* newCast = Cast<AUB_Character> Owner;
+		PlayMuzzleEffect();
 
-			//UGameplayStatics::SpawnEmitterAttached(MuzzleEffect, CurrentOwnerCharacter->GetMesh(), MuzzleSocketName);
-			UGameplayStatics::SpawnEmitterAttached(MuzzleEffect, WeaponMeshComponent, MuzzleSocketName);
-		}
-
+		//Play TraceEffect
 		if (IsValid(TraceEffect)) {
 			UParticleSystemComponent* TraceComponent = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), TraceEffect, GetMuzzleSocketLocation());
 
@@ -71,9 +68,4 @@ void AUB_Rifle::StartAction()
 			}
 		}
 	}
-}
-
-void AUB_Rifle::StopAction()
-{
-	Super::StopAction();
 }

@@ -3,13 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Weapons/UB_Weapon.h"
+#include "Weapons/Firearms/UB_Firearm.h"
 #include "UB_GrenadeLauncher.generated.h"
 
 class AUB_Projectile;
 
 UCLASS()
-class ARKDE_UE4BASIC_API AUB_GrenadeLauncher : public AUB_Weapon
+class ARKDE_UE4BASIC_API AUB_GrenadeLauncher : public AUB_Firearm
 {
 	GENERATED_BODY()
 
@@ -21,7 +21,6 @@ public:
 	AUB_GrenadeLauncher();
 
 protected:
-	virtual void StartAction() override;
-	virtual void StopAction() override;
+	virtual void Fire() override;
 	
 };

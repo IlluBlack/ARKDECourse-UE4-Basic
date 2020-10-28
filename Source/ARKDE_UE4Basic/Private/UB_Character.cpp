@@ -118,6 +118,9 @@ void AUB_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 
 	PlayerInputComponent->BindAction("WeaponAction", IE_Pressed, this, &AUB_Character::StartWeaponAction);
 	PlayerInputComponent->BindAction("WeaponAction", IE_Released, this, &AUB_Character::StopWeaponAction);
+
+	PlayerInputComponent->BindAction("ChangeWeaponMode", IE_Pressed, this, &AUB_Character::ChangeWeaponMode);
+	PlayerInputComponent->BindAction("Reload", IE_Pressed, this, &AUB_Character::ReloadWeapon);
 }
 
 //Move
@@ -342,7 +345,20 @@ void AUB_Character::StopWeaponAction()
 		CurrentWeapon->StopAction();
 	}
 }
+void AUB_Character::ChangeWeaponMode()
+{
+	if (IsValid(CurrentWeapon)) {
+		CurrentWeapon->ChangeWeaponMode();
+	}
+}
+void AUB_Character::ReloadWeapon()
+{
+	if (IsValid(CurrentWeapon)) {
+		CurrentWeapon->Reload();
+	}
+}
 
+//Data
 void AUB_Character::VerifyData()
 {
 	if (!IsValid(CurrentWeapon)) UE_LOG(LogTemp, Warning, TEXT("Current weapon was not defined"));

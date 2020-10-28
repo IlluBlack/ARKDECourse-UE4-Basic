@@ -3,16 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Weapons/UB_Weapon.h"
+#include "Weapons/Firearms/UB_Firearm.h"
 #include "UB_Rifle.generated.h"
-
-class UParticleSystem;
 
 /**
  * 
  */
 UCLASS()
-class ARKDE_UE4BASIC_API AUB_Rifle : public AUB_Weapon
+class ARKDE_UE4BASIC_API AUB_Rifle : public AUB_Firearm
 {
 	GENERATED_BODY()
 
@@ -21,9 +19,6 @@ protected:
 	float TraceLenght;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LineTrace|Debug")
 	bool bDebugLineTrace;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
-	UParticleSystem* MuzzleEffect;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
 	FName TraceEndParamName;
@@ -37,7 +32,6 @@ public:
 	AUB_Rifle();
 	
 protected:
-	virtual void StartAction() override;
-	virtual void StopAction() override;
+	virtual void Fire() override;
 
 };

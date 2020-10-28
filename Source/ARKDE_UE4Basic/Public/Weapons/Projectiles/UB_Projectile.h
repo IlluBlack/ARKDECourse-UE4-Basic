@@ -23,7 +23,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UProjectileMovementComponent* ProjectileMovementComponent;
 	
-	
 public:	
 	// Sets default values for this actor's properties
 	AUB_Projectile();
@@ -35,5 +34,8 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	UFUNCTION(BlueprintCallable, Category = "Projectile")
+	virtual void Throw() {}
 
 };
