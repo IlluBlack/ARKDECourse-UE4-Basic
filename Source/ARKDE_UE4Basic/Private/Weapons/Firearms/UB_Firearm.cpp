@@ -1,23 +1,28 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "UB_Firearm.h"
+#include "UB_Character.h"
+
 #include "Components/SkeletalMeshComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystem.h"
 #include "Runtime/Engine/Public/TimerManager.h"
+#include "Components/CapsuleComponent.h"
+#include "..\..\..\Public\Weapons\Firearms\UB_Firearm.h"
 
 AUB_Firearm::AUB_Firearm()
 {
 	WeaponMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMeshComponent"));
-	WeaponMeshComponent->SetupAttachment(RootComponent);
+	WeaponMeshComponent->SetupAttachment(CustomRootComponent);
 	//WeaponMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	PunchDetectorComponent->SetupAttachment(WeaponMeshComponent);
 
 	AvailableFireModes = { EFireMode::SemiAutomatic };
 	InitialFireModeIdx = 0;
 
 	FireRate = 1.0f;
 	MagazineCapacity = 8;
-	DurationReload = 1.0f;
 
 	MuzzleSocketName = "SCK_Muzzle";
 }
@@ -27,84 +32,52 @@ void AUB_Firearm::BeginPlay()
 	Super::BeginPlay();
 
 	if (MagazineCapacity <= 0) UE_LOG(LogTemp, Error, TEXT("MagazineCapacity for this firearm is zero or less"));
-	bWantsToFire = false;
-	bCanFire = true;
 	RemainingAmmo = MagazineCapacity;
 
 	if (AvailableFireModes.Num() == 0) UE_LOG(LogTemp, Error, TEXT("No AvailableFireModes defined for this firearm"));
 	SetFireMode(InitialFireModeIdx);
 }
 
-//Action weapon
-void AUB_Firearm::StartAction()
-{
-	bWantsToFire = true;
-	if (bCanFire) {
-		if (RemainingAmmo > 0) {
-			Fire();
-		}
-		else {
-			Reload();
-		}
-	}
+//Primary action weapon is fire
+void AUB_Firearm::StartAction() {
+	Fire();
 }
-void AUB_Firearm::StopAction()
+//Secondary action weapon is reload logic
+void AUB_Firearm::StartAdditionalAction() 
 {
-	bWantsToFire = false;
-}
-
-//When automatic firearm
-void AUB_Firearm::VerifyAutomaticFire()
-{
-	//Continue firing if it's still holding
-	if (AvailableFireModes[CurrentFireModeIdx] == EFireMode::Automatic) {
-		if (bWantsToFire && bCanFire) {
-			if (RemainingAmmo > 0) {
-				Fire();
-			}
-			else {
-				Reload();
-			}
-		}
-	}
+	
 }
 
 //Fire
 void AUB_Firearm::Fire()
 {
-	bCanFire = false;
 	GetWorldTimerManager().SetTimer(FireDelayTimer, this, &AUB_Firearm::StopFiring, FireRate, false);
 
 	RemainingAmmo -= 1; //TODO: If this weapon shoots more than one in once, like burst, change this
 }
 void AUB_Firearm::StopFiring()
 {
-	bCanFire = true;
 	GetWorldTimerManager().ClearTimer(FireDelayTimer);
 
-	VerifyAutomaticFire();
+	AUB_Character* Character = Cast<AUB_Character>(CurrentOwnerCharacter);
+	if (IsValid(Character)) {
+		Character->OnFinishedWeaponAction();
+	}
 }
 
 //Reload
+bool AUB_Firearm::IsMagazineEmpty()
+{
+	return RemainingAmmo <= 0;
+}
+bool AUB_Firearm::CanReload()
+{
+	return RemainingAmmo < MagazineCapacity;
+}
+
 void AUB_Firearm::Reload()
 {
-	if (RemainingAmmo < MagazineCapacity) {
-		bCanFire = false;
-		//TODO: This should play an animation
-		//I added a timer while is reloading
-		GetWorldTimerManager().SetTimer(ReloadDelayTimer, this, &AUB_Firearm::StopReloading, DurationReload, false);
-	}
-	else {
-		//TODO: Play animation like no I can't reload, or sound...
-	}
-}
-void AUB_Firearm::StopReloading()
-{
 	RemainingAmmo = MagazineCapacity;
-	GetWorldTimerManager().ClearTimer(ReloadDelayTimer);
-
-	bCanFire = true;
-	VerifyAutomaticFire();
 }
 
 //FireModes
@@ -122,6 +95,12 @@ void AUB_Firearm::ChangeWeaponMode() //change to the next one
 	SetFireMode(nextIdx);
 }
 
+EFireMode AUB_Firearm::GetCurrentFireMode()
+{
+	return AvailableFireModes[CurrentFireModeIdx];
+}
+
+//Effects
 void AUB_Firearm::PlayMuzzleEffect()
 {
 	if (IsValid(MuzzleEffect)) {

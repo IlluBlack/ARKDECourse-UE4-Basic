@@ -4,3 +4,8 @@
 
 #include "CoreMinimal.h"
 
+//Object Collision Channels: OCC
+#define OCC_ENEMY ECC_GameTraceChannel1
+
+//Trace Collision Channels: TCC
+#define TCC_WEAPON ECC_GameTraceChannel2

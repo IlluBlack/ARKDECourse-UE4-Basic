@@ -2,7 +2,9 @@
 
 #include "UB_Character.h"
 #include "UB_CharacterInventory.h"
-#include "Weapons/UB_Weapon.h"
+#include "UB_Weapon.h"
+#include "UB_MeleeWeapon.h"
+#include "UB_Firearm.h"
 
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -11,6 +13,8 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Animation/AnimInstance.h"
+#include "Animation/AnimMontage.h"
 
 // Sets default values
 AUB_Character::AUB_Character()
@@ -21,7 +25,7 @@ AUB_Character::AUB_Character()
 	bUseFirstPersonView = true;
 	bIsInvertedLook = false;
 
-	FPSCameraSocketName = "SCK_FPSCamera";
+	FPSCameraSocketName = "SCK_FPSCamera"; //define first the socket, then attach
 	FPSCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FPS_CameraComponent"));
 	FPSCameraComponent->bUsePawnControlRotation = true; 
 	FPSCameraComponent->SetupAttachment(GetMesh(), FPSCameraSocketName); //Needs to be son of the mesh to be able to be in the socket
@@ -44,7 +48,7 @@ void AUB_Character::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//Inventory = NewObject<UUB_CharacterInventory>(); //not now, using TSubclassOf
+	InitializeReferences();
 	CreateInventory();
 	CreateInitialWeapon();
 	
@@ -59,8 +63,17 @@ void AUB_Character::BeginPlay()
 	bIsPressingCrouchOrSlide = false;
 	ResetMaxMovementSpeed();
 
+	SetActionState(EActionState::Default);
+
 	//Always at the end
 	VerifyData();
+}
+
+void AUB_Character::InitializeReferences()
+{
+	if (IsValid(GetMesh())) {
+		AnimInstance = GetMesh()->GetAnimInstance();
+	}
 }
 
 // Called every frame
@@ -121,6 +134,14 @@ void AUB_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 
 	PlayerInputComponent->BindAction("ChangeWeaponMode", IE_Pressed, this, &AUB_Character::ChangeWeaponMode);
 	PlayerInputComponent->BindAction("Reload", IE_Pressed, this, &AUB_Character::ReloadWeapon);
+
+	PlayerInputComponent->BindAction("WeaponPunchAction", IE_Pressed, this, &AUB_Character::StartWeaponPunchAction);
+	//PlayerInputComponent->BindAction("WeaponPunchAction", IE_Released, this, &AUB_Character::StopWeaponPunchAction);
+}
+
+void AUB_Character::SetActionState(EActionState NewActionState)
+{
+	ECurrentActionState = NewActionState;
 }
 
 //Move
@@ -313,6 +334,7 @@ void AUB_Character::LaunchCharacter(FVector LaunchVelocity, bool bXYOverride, bo
 //Inventory
 void AUB_Character::CreateInventory()
 {
+	//Inventory = NewObject<UUB_CharacterInventory>(); //not now, using TSubclassOf
 	if (IsValid(InventoryClass)) {
 		Inventory = InventoryClass->GetDefaultObject<UUB_CharacterInventory>();
 	}
@@ -322,39 +344,238 @@ void AUB_Character::CreateInventory()
 void AUB_Character::CreateInitialWeapon()
 {
 	if (IsValid(InitialWeaponClass)) {
-		//TODO: Maybe spawn in a socket ?
 		//CurrentWeapon = GetWorld()->SpawnActor<AUB_Weapon>(InitialWeaponClass, GetActorLocation(), GetActorRotation());
-		CurrentWeapon = GetWorld()->SpawnActor<AUB_Weapon>(InitialWeaponClass);
-		
-		if (IsValid(CurrentWeapon)) {
-			CurrentWeapon->SetCharacterOwner(this);
-			//CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-			CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocketName);
-		}
+		AUB_Weapon* NewWeapon  = GetWorld()->SpawnActor<AUB_Weapon>(InitialWeaponClass);
+		EquipWeapon(NewWeapon);
 	}
 }
+void AUB_Character::EquipWeapon(AUB_Weapon* Weapon)
+{
+	CurrentWeapon = Weapon;
+
+	if (IsValid(CurrentWeapon)) {
+		CurrentMeleeWeapon = Cast<AUB_MeleeWeapon>(CurrentWeapon);
+		bIsCurrentWeaponMelee = IsValid(CurrentMeleeWeapon);
+
+		if (bIsCurrentWeaponMelee) {
+			ResetMeleeCombo();
+		}
+		else{
+			CurrentFirearm = Cast<AUB_Firearm>(CurrentWeapon);
+
+			if (!IsValid(CurrentFirearm)) {
+				UE_LOG(LogTemp, Error, TEXT("The weapon you want to equip is not melee neither firearm"));
+			}
+		}
+
+		CurrentWeapon->SetCharacterOwner(this);
+		CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocketName);
+	}
+}
+
+//Weapon Action
 void AUB_Character::StartWeaponAction()
 {
-	if (IsValid(CurrentWeapon)) {
-		CurrentWeapon->StartAction();
+	bIsPressingWeaponAction = true;
+
+	//Weapon action is more important over other actions, then stop other actions
+	if (ECurrentActionState == EActionState::Reloading) {
+		if (!bIsCurrentWeaponMelee) {
+			if (IsValid(CurrentFirearm)) {
+				if (CurrentFirearm->CanReload()) {
+					return; //needs to end reloading first becasuse has no more ammo
+				}
+			}
+		}
+
+		StopReloadingWeapon();
+	}
+	else if (ECurrentActionState == EActionState::WeaponPunchAction) return;
+
+	if (bIsCurrentWeaponMelee) {
+		if (IsValid(CurrentMeleeWeapon)) {
+
+			//Verify combos
+			if (CurrentMeleeWeapon->HasCombos()) {
+				if (ECurrentActionState == EActionState::WeaponAction) { //was already in the action, then verify if combo
+					if (bIsMeleeComboEnabled) {
+						if (CurrentStepMeleeCombo < (MeleeWeaponAnimMontages.Num()-1)) { //-1 because the last has no next stepCombo
+							CurrentStepMeleeCombo++;
+							SetMeleeComboEnabled(false); //don't make more than one combo in the animation
+						}
+						else {
+							return;
+						}
+					}
+					else {
+						return; //don't do anything else
+					}
+				}
+			}
+			else {
+				if (ECurrentActionState == EActionState::WeaponAction) return;
+			}
+
+			PlayAnimMontage(MeleeWeaponAnimMontages[CurrentStepMeleeCombo]);
+
+			CurrentMeleeWeapon->SetStepCombo(CurrentStepMeleeCombo);
+			CurrentMeleeWeapon->StartAction();
+			SetActionState(EActionState::WeaponAction);
+		}
+	}
+	else {
+
+		if (ECurrentActionState == EActionState::WeaponAction) return;
+
+		if (IsValid(CurrentFirearm)) {
+
+			if (CurrentFirearm->IsMagazineEmpty()) {
+				ReloadWeapon();
+			}
+			else {
+				CurrentFirearm->StartAction();
+				SetActionState(EActionState::WeaponAction);
+			}
+		}
 	}
 }
 void AUB_Character::StopWeaponAction()
 {
-	if (IsValid(CurrentWeapon)) {
-		CurrentWeapon->StopAction();
+	bIsPressingWeaponAction = false;
+
+	if (ECurrentActionState == EActionState::WeaponAction) {
+		if (IsValid(CurrentWeapon)) {
+			CurrentWeapon->StopAction();
+		}
 	}
 }
+void AUB_Character::OnFinishedWeaponAction() //when finished the action
+{
+	SetActionState(EActionState::Default);
+
+	if (!bIsCurrentWeaponMelee) {
+		VerifyAutomaticFirearm();
+	}
+}
+
+//When Automatic Firearm
+void AUB_Character::VerifyAutomaticFirearm()
+{
+	if (IsValid(CurrentFirearm)) {
+		//Verify if it's automatic weapon, and continue firing
+		if (CurrentFirearm->GetCurrentFireMode() == EFireMode::Automatic) {
+			if (bIsPressingWeaponAction) {
+
+				///
+				StartWeaponAction();
+
+			}
+		}
+	}
+}
+
+//Weapon Mode
 void AUB_Character::ChangeWeaponMode()
 {
-	if (IsValid(CurrentWeapon)) {
-		CurrentWeapon->ChangeWeaponMode();
+	if (!bIsCurrentWeaponMelee) {
+		if (IsValid(CurrentFirearm)) {
+			CurrentFirearm->ChangeWeaponMode();
+
+			//Play a sound here
+		}
 	}
 }
+
+//Reload Weapon
 void AUB_Character::ReloadWeapon()
 {
+	if (ECurrentActionState != EActionState::Default) return;
+
+	if (bIsCurrentWeaponMelee) {
+		PlayAnimMontage(DenyAnimMontage);
+	}
+	else {
+		if (IsValid(CurrentFirearm)) {
+			if (CurrentFirearm->CanReload()) {
+				PlayAnimMontage(ReloadWeaponAnimMontage);
+				
+				SetActionState(EActionState::Reloading);
+			}
+		}
+	}
+}
+void AUB_Character::StopReloadingWeapon()
+{
+	SetActionState(EActionState::Default);
+	//Stop anim montage
+	if (IsValid(AnimInstance)) {
+		AnimInstance->StopAllMontages(0.03f);
+	}
+}
+
+void AUB_Character::OnFinishedReloadingWeapon()
+{
+	//Here is actually when should reload logically the weapon
+	if (bIsCurrentWeaponMelee) {
+		UE_LOG(LogTemp, Error, TEXT("WTF did you reload a melee weapon?"));
+	}
+	else {
+		if (IsValid(CurrentFirearm)) {
+			CurrentFirearm->Reload();
+
+			VerifyAutomaticFirearm();
+		}
+	}
+
+	SetActionState(EActionState::Default);
+}
+
+//Weapon Punch
+void AUB_Character::StartWeaponPunchAction()
+{
+	if (ECurrentActionState == EActionState::Reloading) {
+		StopReloadingWeapon();
+	}
+	else if (ECurrentActionState != EActionState::Default) return;
+
+
 	if (IsValid(CurrentWeapon)) {
-		CurrentWeapon->Reload();
+		AnimInstance->Montage_Play(WeaponPunchAnimMontage);
+
+		CurrentWeapon->StartPunchAction();
+		SetActionState(EActionState::WeaponPunchAction);
+	}
+}
+void AUB_Character::OnFinishedWeaponPunchAction()
+{
+	SetActionState(EActionState::Default);
+}
+
+//Combos
+void AUB_Character::SetMeleeComboEnabled(bool NewState)
+{
+	bIsMeleeComboEnabled = NewState;
+}
+void AUB_Character::ResetMeleeCombo()
+{
+	SetMeleeComboEnabled(false);
+	CurrentStepMeleeCombo = 0;
+}
+
+AUB_MeleeWeapon* AUB_Character::GetCurrentMeleeWeapon()
+{
+	if (bIsCurrentWeaponMelee) {
+		return CurrentMeleeWeapon;
+	}
+
+	return nullptr;
+}
+
+//Animation
+void AUB_Character::PlayAnimMontage(UAnimMontage* animMontage)
+{
+	if (IsValid(AnimInstance) && IsValid(animMontage)) {
+		AnimInstance->Montage_Play(animMontage);
 	}
 }
 

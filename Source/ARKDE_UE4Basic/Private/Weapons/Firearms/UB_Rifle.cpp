@@ -2,6 +2,7 @@
 
 
 #include "UB_Rifle.h"
+#include "ARKDE_UE4Basic.h"
 #include "GameFramework/Character.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
@@ -35,7 +36,7 @@ void AUB_Rifle::Fire()
 		QueryParams.AddIgnoredActor(Owner); //ignore my owner collision
 		QueryParams.bTraceComplex = true; //to be able to get more data, and more accurate collision
 
-		bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, EyeLocation, TraceEnd, ECC_Visibility, QueryParams);
+		bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, EyeLocation, TraceEnd, TCC_WEAPON, QueryParams);
 
 		FVector ResultTraceEnd = TraceEnd; //By default is the final point of the lineTrace if not collision
 

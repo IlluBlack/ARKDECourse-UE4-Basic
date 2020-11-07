@@ -27,10 +27,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USkeletalMeshComponent* WeaponMeshComponent;
 
-private:
-	UPROPERTY(VisibleAnywhere, Category = "Firearm")
-	bool bWantsToFire; //this is true while owner is pressing fire
-
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Firearm")
 	TArray<EFireMode> AvailableFireModes;
@@ -43,14 +39,9 @@ protected:
 	float FireRate;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Firearm")
 	float MagazineCapacity; //number of rounds bullets before having to reload
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Firearm")
-	float DurationReload;
 
 	FTimerHandle FireDelayTimer; //use FireRate
-	FTimerHandle ReloadDelayTimer; //use DurationReload
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Firearm")
-	bool bCanFire;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Firearm")
 	int RemainingAmmo; //how many bullets do I have left
 
@@ -65,17 +56,10 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-	virtual void StartAction() override;
-	virtual void StopAction() override;
-
-	void VerifyAutomaticFire();
 
 	UFUNCTION(BlueprintCallable, Category = "Firearm")
 	virtual void Fire();
 	void StopFiring();
-
-	virtual void Reload() override;
-	void StopReloading();
 
 	UFUNCTION(BlueprintCallable, Category = "Muzzle")
 	void PlayMuzzleEffect();
@@ -86,5 +70,18 @@ protected:
 
 	void SetFireMode(int IdxMode);
 
-	virtual void ChangeWeaponMode() override;
+public:
+	virtual void StartAction() override;
+	virtual void StartAdditionalAction() override;
+
+	bool IsMagazineEmpty();
+	bool CanReload();
+	UFUNCTION(BlueprintCallable, Category = "Firearm")
+	virtual void Reload();
+
+	UFUNCTION(BlueprintCallable, Category = "Firearm") //If the weapon has another mode change it
+	virtual void ChangeWeaponMode();
+
+	EFireMode GetCurrentFireMode();
+
 };
