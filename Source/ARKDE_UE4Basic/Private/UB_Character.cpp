@@ -4,7 +4,6 @@
 #include "UB_CharacterInventory.h"
 #include "UB_Weapon.h"
 #include "UB_MeleeWeapon.h"
-#include "UB_Firearm.h"
 
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -13,8 +12,6 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "Animation/AnimInstance.h"
-#include "Animation/AnimMontage.h"
 
 // Sets default values
 AUB_Character::AUB_Character()
@@ -63,17 +60,13 @@ void AUB_Character::BeginPlay()
 	bIsPressingCrouchOrSlide = false;
 	ResetMaxMovementSpeed();
 
-	SetActionState(EActionState::Default);
-
 	//Always at the end
 	VerifyData();
 }
 
 void AUB_Character::InitializeReferences()
 {
-	if (IsValid(GetMesh())) {
-		AnimInstance = GetMesh()->GetAnimInstance();
-	}
+	//initialize here if you need some references...
 }
 
 // Called every frame
@@ -131,17 +124,11 @@ void AUB_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 
 	PlayerInputComponent->BindAction("WeaponAction", IE_Pressed, this, &AUB_Character::StartWeaponAction);
 	PlayerInputComponent->BindAction("WeaponAction", IE_Released, this, &AUB_Character::StopWeaponAction);
-
+	PlayerInputComponent->BindAction("AdditionalWeaponAction", IE_Pressed, this, &AUB_Character::StartAdditionalWeaponAction);
 	PlayerInputComponent->BindAction("ChangeWeaponMode", IE_Pressed, this, &AUB_Character::ChangeWeaponMode);
-	PlayerInputComponent->BindAction("Reload", IE_Pressed, this, &AUB_Character::ReloadWeapon);
 
 	PlayerInputComponent->BindAction("WeaponPunchAction", IE_Pressed, this, &AUB_Character::StartWeaponPunchAction);
 	//PlayerInputComponent->BindAction("WeaponPunchAction", IE_Released, this, &AUB_Character::StopWeaponPunchAction);
-}
-
-void AUB_Character::SetActionState(EActionState NewActionState)
-{
-	ECurrentActionState = NewActionState;
 }
 
 //Move
@@ -349,27 +336,14 @@ void AUB_Character::CreateInitialWeapon()
 		EquipWeapon(NewWeapon);
 	}
 }
-void AUB_Character::EquipWeapon(AUB_Weapon* Weapon)
+void AUB_Character::EquipWeapon(AUB_Weapon* Weapon) //TODO: Use later with 1 2 3 keys
 {
 	CurrentWeapon = Weapon;
 
 	if (IsValid(CurrentWeapon)) {
-		CurrentMeleeWeapon = Cast<AUB_MeleeWeapon>(CurrentWeapon);
-		bIsCurrentWeaponMelee = IsValid(CurrentMeleeWeapon);
-
-		if (bIsCurrentWeaponMelee) {
-			ResetMeleeCombo();
-		}
-		else{
-			CurrentFirearm = Cast<AUB_Firearm>(CurrentWeapon);
-
-			if (!IsValid(CurrentFirearm)) {
-				UE_LOG(LogTemp, Error, TEXT("The weapon you want to equip is not melee neither firearm"));
-			}
-		}
-
 		CurrentWeapon->SetCharacterOwner(this);
 		CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocketName);
+		CurrentWeapon->EquipWeapon();
 	}
 }
 
@@ -378,206 +352,85 @@ void AUB_Character::StartWeaponAction()
 {
 	bIsPressingWeaponAction = true;
 
-	//Weapon action is more important over other actions, then stop other actions
-	if (ECurrentActionState == EActionState::Reloading) {
-		if (!bIsCurrentWeaponMelee) {
-			if (IsValid(CurrentFirearm)) {
-				if (CurrentFirearm->CanReload()) {
-					return; //needs to end reloading first becasuse has no more ammo
-				}
-			}
-		}
-
-		StopReloadingWeapon();
-	}
-	else if (ECurrentActionState == EActionState::WeaponPunchAction) return;
-
-	if (bIsCurrentWeaponMelee) {
-		if (IsValid(CurrentMeleeWeapon)) {
-
-			//Verify combos
-			if (CurrentMeleeWeapon->HasCombos()) {
-				if (ECurrentActionState == EActionState::WeaponAction) { //was already in the action, then verify if combo
-					if (bIsMeleeComboEnabled) {
-						if (CurrentStepMeleeCombo < (MeleeWeaponAnimMontages.Num()-1)) { //-1 because the last has no next stepCombo
-							CurrentStepMeleeCombo++;
-							SetMeleeComboEnabled(false); //don't make more than one combo in the animation
-						}
-						else {
-							return;
-						}
-					}
-					else {
-						return; //don't do anything else
-					}
-				}
-			}
-			else {
-				if (ECurrentActionState == EActionState::WeaponAction) return;
-			}
-
-			PlayAnimMontage(MeleeWeaponAnimMontages[CurrentStepMeleeCombo]);
-
-			CurrentMeleeWeapon->SetStepCombo(CurrentStepMeleeCombo);
-			CurrentMeleeWeapon->StartAction();
-			SetActionState(EActionState::WeaponAction);
-		}
-	}
-	else {
-
-		if (ECurrentActionState == EActionState::WeaponAction) return;
-
-		if (IsValid(CurrentFirearm)) {
-
-			if (CurrentFirearm->IsMagazineEmpty()) {
-				ReloadWeapon();
-			}
-			else {
-				CurrentFirearm->StartAction();
-				SetActionState(EActionState::WeaponAction);
-			}
-		}
+	if (IsValid(CurrentWeapon)) {
+		CurrentWeapon->StartAction(); //this method could change the action state
 	}
 }
 void AUB_Character::StopWeaponAction()
 {
 	bIsPressingWeaponAction = false;
 
-	if (ECurrentActionState == EActionState::WeaponAction) {
-		if (IsValid(CurrentWeapon)) {
-			CurrentWeapon->StopAction();
-		}
+	if (IsValid(CurrentWeapon)) {
+		CurrentWeapon->StopAction();
 	}
 }
-void AUB_Character::OnFinishedWeaponAction() //when finished the action
+
+//Additional Weapon Action
+void AUB_Character::StartAdditionalWeaponAction()
 {
-	SetActionState(EActionState::Default);
-
-	if (!bIsCurrentWeaponMelee) {
-		VerifyAutomaticFirearm();
+	if (IsValid(CurrentWeapon)) {
+		CurrentWeapon->StartAdditionalAction();
 	}
 }
 
-//When Automatic Firearm
-void AUB_Character::VerifyAutomaticFirearm()
-{
-	if (IsValid(CurrentFirearm)) {
-		//Verify if it's automatic weapon, and continue firing
-		if (CurrentFirearm->GetCurrentFireMode() == EFireMode::Automatic) {
-			if (bIsPressingWeaponAction) {
-
-				///
-				StartWeaponAction();
-
-			}
-		}
-	}
-}
-
-//Weapon Mode
-void AUB_Character::ChangeWeaponMode()
-{
-	if (!bIsCurrentWeaponMelee) {
-		if (IsValid(CurrentFirearm)) {
-			CurrentFirearm->ChangeWeaponMode();
-
-			//Play a sound here
-		}
-	}
-}
-
-//Reload Weapon
-void AUB_Character::ReloadWeapon()
-{
-	if (ECurrentActionState != EActionState::Default) return;
-
-	if (bIsCurrentWeaponMelee) {
-		PlayAnimMontage(DenyAnimMontage);
-	}
-	else {
-		if (IsValid(CurrentFirearm)) {
-			if (CurrentFirearm->CanReload()) {
-				PlayAnimMontage(ReloadWeaponAnimMontage);
-				
-				SetActionState(EActionState::Reloading);
-			}
-		}
-	}
-}
-void AUB_Character::StopReloadingWeapon()
-{
-	SetActionState(EActionState::Default);
-	//Stop anim montage
-	if (IsValid(AnimInstance)) {
-		AnimInstance->StopAllMontages(0.03f);
-	}
-}
-
-void AUB_Character::OnFinishedReloadingWeapon()
-{
-	//Here is actually when should reload logically the weapon
-	if (bIsCurrentWeaponMelee) {
-		UE_LOG(LogTemp, Error, TEXT("WTF did you reload a melee weapon?"));
-	}
-	else {
-		if (IsValid(CurrentFirearm)) {
-			CurrentFirearm->Reload();
-
-			VerifyAutomaticFirearm();
-		}
-	}
-
-	SetActionState(EActionState::Default);
-}
-
-//Weapon Punch
+//Punch Action
 void AUB_Character::StartWeaponPunchAction()
 {
-	if (ECurrentActionState == EActionState::Reloading) {
-		StopReloadingWeapon();
-	}
-	else if (ECurrentActionState != EActionState::Default) return;
-
-
 	if (IsValid(CurrentWeapon)) {
-		AnimInstance->Montage_Play(WeaponPunchAnimMontage);
-
 		CurrentWeapon->StartPunchAction();
-		SetActionState(EActionState::WeaponPunchAction);
+	}
+}
+
+//Change Weapon Mode
+void AUB_Character::ChangeWeaponMode()
+{
+	if (IsValid(CurrentWeapon)) {
+		CurrentWeapon->ChangeWeaponMode();
+	}
+}
+
+//Anim notifiers
+void AUB_Character::OnFinishedWeaponAction()
+{
+	if (IsValid(CurrentWeapon)) {
+		CurrentWeapon->OnFinishedAction();
+	}
+}
+void AUB_Character::OnFinishedAdditionalWeaponAction()
+{
+	if (IsValid(CurrentWeapon)) {
+		CurrentWeapon->OnFinishedAdditionalAction();
 	}
 }
 void AUB_Character::OnFinishedWeaponPunchAction()
 {
-	SetActionState(EActionState::Default);
-}
-
-//Combos
-void AUB_Character::SetMeleeComboEnabled(bool NewState)
-{
-	bIsMeleeComboEnabled = NewState;
-}
-void AUB_Character::ResetMeleeCombo()
-{
-	SetMeleeComboEnabled(false);
-	CurrentStepMeleeCombo = 0;
-}
-
-AUB_MeleeWeapon* AUB_Character::GetCurrentMeleeWeapon()
-{
-	if (bIsCurrentWeaponMelee) {
-		return CurrentMeleeWeapon;
-	}
-
-	return nullptr;
-}
-
-//Animation
-void AUB_Character::PlayAnimMontage(UAnimMontage* animMontage)
-{
-	if (IsValid(AnimInstance) && IsValid(animMontage)) {
-		AnimInstance->Montage_Play(animMontage);
+	if (IsValid(CurrentWeapon)) {
+		CurrentWeapon->OnFinishedPunchAction();
 	}
 }
+
+//MeleeCombo anim notifiers
+void AUB_Character::ANEnableMeleeCombo()
+{
+	if (IsValid(CurrentWeapon)) {
+		AUB_MeleeWeapon* MeleeWeapon = Cast<AUB_MeleeWeapon>(CurrentWeapon);
+		if (IsValid(MeleeWeapon)) {
+			MeleeWeapon->SetMeleeComboEnabled(true);
+		}
+	}
+}
+
+void AUB_Character::ANResetMeleeCombo()
+{
+	if (IsValid(CurrentWeapon)) {
+		AUB_MeleeWeapon* MeleeWeapon = Cast<AUB_MeleeWeapon>(CurrentWeapon);
+		if (IsValid(MeleeWeapon)) {
+			MeleeWeapon->ResetMeleeCombo();
+		}
+	}
+}
+
+
 
 //Data
 void AUB_Character::VerifyData()

@@ -7,6 +7,7 @@
 #include "UB_Firearm.generated.h"
 
 class UParticleSystem;
+class UAnimMontage;
 
 UENUM(BlueprintType)
 enum class EFireMode : uint8
@@ -40,10 +41,14 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Firearm")
 	float MagazineCapacity; //number of rounds bullets before having to reload
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Firearm")
+	bool bIsFiring;
 	FTimerHandle FireDelayTimer; //use FireRate
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Firearm")
 	int RemainingAmmo; //how many bullets do I have left
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Firearm")
+	bool bIsReloading;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Muzzle")
 	FName MuzzleSocketName;
@@ -51,16 +56,38 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
 	UParticleSystem* MuzzleEffect; //all fire arms should have a muzzle effect
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
+	UAnimMontage* ReloadAnimMontage; //we put this in this class and not the character because reload animation can differ between firearms
+
 public:
 	AUB_Firearm();
 
 protected:
 	virtual void BeginPlay() override;
 
+	//Fire
 	UFUNCTION(BlueprintCallable, Category = "Firearm")
 	virtual void Fire();
-	void StopFiring();
+	void FinishedFiring();
+	void CancelFiring();
 
+	//Automatic fire
+	virtual void VerifyAutomaticFire();
+
+	//Reload
+	void FillMagazine();
+	bool IsMagazineEmpty() const;
+	bool CanReload() const;
+	UFUNCTION(BlueprintCallable, Category = "Firearm")
+	virtual void Reload();
+	virtual void FinishedReloading();
+	void CancelReloading();
+
+	//Modes
+	void SetFireMode(int IdxMode);
+	virtual void ChangeWeaponMode() override;
+
+	//Effects
 	UFUNCTION(BlueprintCallable, Category = "Muzzle")
 	void PlayMuzzleEffect();
 	UFUNCTION(BlueprintCallable, Category = "Muzzle")
@@ -68,20 +95,13 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Muzzle")
 	FRotator GetMuzzleSocketRotation();
 
-	void SetFireMode(int IdxMode);
-
 public:
 	virtual void StartAction() override;
 	virtual void StartAdditionalAction() override;
+	virtual void StartPunchAction() override;
 
-	bool IsMagazineEmpty();
-	bool CanReload();
-	UFUNCTION(BlueprintCallable, Category = "Firearm")
-	virtual void Reload();
-
-	UFUNCTION(BlueprintCallable, Category = "Firearm") //If the weapon has another mode change it
-	virtual void ChangeWeaponMode();
+	//Anim notifier
+	virtual void OnFinishedAdditionalAction() override;
 
 	EFireMode GetCurrentFireMode();
-
 };

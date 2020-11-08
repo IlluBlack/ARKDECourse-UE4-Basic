@@ -12,9 +12,9 @@ void UUB_ANSWeaponMelee::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequ
 	if (IsValid(CharacterActor)) {
 		AUB_Character* Character = Cast<AUB_Character>(CharacterActor);
 		if (IsValid(Character)) {
-			AUB_MeleeWeapon* MeleeWeapon = Character->GetCurrentMeleeWeapon();
+			AUB_MeleeWeapon* MeleeWeapon = Cast<AUB_MeleeWeapon>(Character->CurrentWeapon);
 			if (IsValid(MeleeWeapon)) {
-				MeleeWeapon->SetMeleeDetectorEnabled(ECollisionEnabled::QueryAndPhysics);
+				MeleeWeapon->EnableMeleeDetector();
 			}
 		}
 	}
@@ -26,9 +26,9 @@ void UUB_ANSWeaponMelee::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequen
 	if (IsValid(CharacterActor)) {
 		AUB_Character* Character = Cast<AUB_Character>(CharacterActor);
 		if (IsValid(Character)) {
-			AUB_MeleeWeapon* MeleeWeapon = Character->GetCurrentMeleeWeapon();
+			AUB_MeleeWeapon* MeleeWeapon = Cast<AUB_MeleeWeapon>(Character->CurrentWeapon);
 			if (IsValid(MeleeWeapon)) {
-				MeleeWeapon->SetMeleeDetectorEnabled(ECollisionEnabled::NoCollision);
+				MeleeWeapon->DisableMeleeDetector();
 			}
 		}
 	}

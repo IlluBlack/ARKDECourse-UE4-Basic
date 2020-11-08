@@ -8,6 +8,7 @@
 #include "GameFramework/Character.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Animation/AnimMontage.h"
 
 // Sets default values
 AUB_Weapon::AUB_Weapon()
@@ -22,7 +23,7 @@ AUB_Weapon::AUB_Weapon()
 	//PunchDetectorComponent->SetupAttachment(RootComponent); //I don't need it in a socket, assign in firearm or melee subclasses
 	PunchDetectorComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
 	PunchDetectorComponent->SetCollisionResponseToChannel(OCC_ENEMY, ECR_Overlap);
-	SetPunchDetectorEnabled(ECollisionEnabled::NoCollision); //starts with no collision
+	DisablePunchDetector();
 
 	Damage = 30.0f;
 	PunchDamage = 18.0f;
@@ -44,37 +45,46 @@ void AUB_Weapon::Tick(float DeltaTime)
 }
 
 //Primary Action
-void AUB_Weapon::StartAction() {
+void AUB_Weapon::StartAction() 
+{
+	if (bIsPunching) return;
 	BP_StartAction();
 }
-void AUB_Weapon::StopAction() {
+void AUB_Weapon::StopAction() 
+{
+	if (bIsPunching) return;
 	BP_StopAction();
 }
 
 //Additional Action
-
-void AUB_Weapon::StartAdditionalAction() {
+void AUB_Weapon::StartAdditionalAction() 
+{
+	if (bIsPunching) return;
 	BP_StartAdditionalAction();
 }
-void AUB_Weapon::StopAdditionalAction() {
-	BP_StopAdditionalAction();
-}
 
-//Owner
-void AUB_Weapon::SetCharacterOwner(AUB_Character* NewOwner)
+//Punch Action
+void AUB_Weapon::StartPunchAction()
 {
-	if (IsValid(NewOwner)) {
-		SetOwner(NewOwner);
-		CurrentOwnerCharacter = NewOwner;
-	}
-}
+	if (bIsPunching) return;
 
-//PunchDetector
-void AUB_Weapon::SetPunchDetectorEnabled(ECollisionEnabled::Type NewCollisionState)
+	bIsPunching = true;
+	PlayAnimMontageInOwner(PunchAnimMontage);
+}
+void AUB_Weapon::OnFinishedPunchAction()
 {
-	PunchDetectorComponent->SetCollisionEnabled(NewCollisionState);
+	bIsPunching = false;
+}
+void AUB_Weapon::EnablePunchDetector()
+{
+	PunchDetectorComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+}
+void AUB_Weapon::DisablePunchDetector()
+{
+	PunchDetectorComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
+//Punch Detector
 void AUB_Weapon::ApplyPunchDamage(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (IsValid(OtherActor)) {
@@ -85,5 +95,30 @@ void AUB_Weapon::ApplyPunchDamage(UPrimitiveComponent* OverlappedComponent, AAct
 		}
 	}
 }
+
+//Owner
+void AUB_Weapon::PlayAnimMontageInOwner(UAnimMontage* AnimMontage)
+{
+	if (IsValid(CurrentOwnerCharacter) && IsValid(AnimMontage)) {
+		CurrentOwnerCharacter->PlayAnimMontage(AnimMontage);
+	}
+}
+void AUB_Weapon::StopAnimMontageInOwner(UAnimMontage* AnimMontage)
+{
+	if (IsValid(CurrentOwnerCharacter) && IsValid(AnimMontage)) {
+		CurrentOwnerCharacter->StopAnimMontage(AnimMontage);
+	}
+}
+
+void AUB_Weapon::SetCharacterOwner(AUB_Character* NewOwner)
+{
+	if (IsValid(NewOwner)) {
+		SetOwner(NewOwner);
+		CurrentOwnerCharacter = NewOwner;
+	}
+}
+
+
+
 
 

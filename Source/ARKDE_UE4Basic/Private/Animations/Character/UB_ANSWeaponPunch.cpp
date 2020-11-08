@@ -14,7 +14,7 @@ void UUB_ANSWeaponPunch::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequ
 		if (IsValid(Character)) {
 			AUB_Weapon* Weapon = Character->CurrentWeapon;
 			if (IsValid(Weapon)) {
-				Weapon->SetPunchDetectorEnabled(ECollisionEnabled::QueryAndPhysics);
+				Weapon->EnablePunchDetector();
 			}
 		}
 	}
@@ -28,7 +28,7 @@ void UUB_ANSWeaponPunch::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequen
 		if (IsValid(Character)) {
 			AUB_Weapon* Weapon = Character->CurrentWeapon;
 			if (IsValid(Weapon)) {
-				Weapon->SetPunchDetectorEnabled(ECollisionEnabled::NoCollision);
+				Weapon->DisablePunchDetector();
 			}
 		}
 	}

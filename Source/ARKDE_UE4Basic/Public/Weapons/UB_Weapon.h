@@ -11,6 +11,7 @@ class AUB_Character;
 class UDamageType;
 class USceneComponent;
 class UCapsuleComponent;
+class UAnimMontage;
 
 UCLASS()
 class ARKDE_UE4BASIC_API AUB_Weapon : public AActor
@@ -32,8 +33,13 @@ protected:
 	//Each weapon can be used for punch, even if it's not a melee weapon, it's damage is lower
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Punch")
 	float PunchDamage;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Punch")
+	bool bIsPunching;
 
-	ACharacter* CurrentOwnerCharacter;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
+	UAnimMontage* PunchAnimMontage; //punch animation for this weapon
+
+	AUB_Character* CurrentOwnerCharacter;
 	
 public:	
 	// Sets default values for this actor's properties
@@ -54,15 +60,19 @@ protected:
 	//Additional action, reload...
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Weapon")
 	void BP_StartAdditionalAction();
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Weapon")
-	void BP_StopAdditionalAction();
 
-	UFUNCTION()
+	//Punch
+	UFUNCTION() //must have this if is gonna be added to OnComponentBeginOverlap
 	virtual void ApplyPunchDamage(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	void PlayAnimMontageInOwner(UAnimMontage* AnimMontage);
+	void StopAnimMontageInOwner(UAnimMontage* AnimMontage);
 
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	virtual void EquipWeapon() {} //To reset variables inside the weapon or whatever needed
 
 	UFUNCTION(BlueprintCallable) //Don't put this UFUNCTION in classes that are inheriting
 	virtual void StartAction();
@@ -71,15 +81,23 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	virtual void StartAdditionalAction();
-	UFUNCTION(BlueprintCallable)
-	virtual void StopAdditionalAction();
 
-	//If I want to make something specific when weapon punch
+	//Weapon punch
 	UFUNCTION(BlueprintCallable)
-	virtual void StartPunchAction() {};
-	void SetPunchDetectorEnabled(ECollisionEnabled::Type NewCollisionState);
+	virtual void StartPunchAction();
+
+	//Change Mode
+	UFUNCTION(BlueprintCallable) //change to another mode if this weapon has one
+	virtual void ChangeWeaponMode() {}
 
 	UFUNCTION(BlueprintCallable)
 	void SetCharacterOwner(AUB_Character* NewOwner);
-	
+
+	//Animation notifiers that are called from character or anim notifiers
+	virtual void OnFinishedAction() {}
+	virtual void OnFinishedAdditionalAction() {}
+	virtual void OnFinishedPunchAction(); //finished the critic part of punch action
+
+	virtual void EnablePunchDetector(); //EnableCollider
+	virtual void DisablePunchDetector(); //EnableCollider
 };

@@ -24,15 +24,6 @@ enum class EMovementState : uint8
 	Sliding,
 };
 
-UENUM(BlueprintType)
-enum class EActionState : uint8 //UpperBody actions
-{
-	Default, //locomotion or other states that does not interfere
-	Reloading,
-	WeaponAction, //shooting...
-	WeaponPunchAction, //punching with weapon
-};
-
 UCLASS()
 class ARKDE_UE4BASIC_API AUB_Character : public ACharacter
 {
@@ -56,9 +47,6 @@ private: //these ones are used just for internal logic
 	UPROPERTY(VisibleAnywhere, Category = "Input")
 	bool bIsPressingCrouchOrSlide;
 
-	UPROPERTY(VisibleAnywhere, Category = "Input")
-	bool bIsPressingWeaponAction;
-
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera")
 	bool bUseFirstPersonView;
@@ -81,6 +69,8 @@ protected:
 	float MaxCrouchSpeed; //the one setted in character movement
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement", meta = (ClampMin = "0.0", UIMin = "0.1"))
 	float MaxSlideSpeed;
+	
+	//TODO: Maybe fix this slider not with time but with velocity, if it's going down a mountain, they should be able to go down all sliding
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement", meta = (ClampMin = "0.0", UIMin = "0.1"))
 	float MinDurationSlide; //if velocity is maxWalkSpeed what's the duration of sliding
@@ -97,36 +87,18 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	TSubclassOf<AUB_Weapon> InitialWeaponClass;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation")
-	EActionState ECurrentActionState;
-
-	UAnimInstance* AnimInstance;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
-	UAnimMontage* DenyAnimMontage; //look for an animation of player moving face like saying nope
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
-	UAnimMontage* ReloadWeaponAnimMontage;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
-	UAnimMontage* WeaponPunchAnimMontage; //same weapon punch animation for all weapons
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
-	TArray<UAnimMontage*> MeleeWeaponAnimMontages; //all melee will same combo animations
-
-	//Combos are just with meleeWeapons
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combos")
-	bool bIsMeleeComboEnabled; //combos are enabled just in some specific part of the animation
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combos")
-	int CurrentStepMeleeCombo;
-
-	bool bIsCurrentWeaponMelee;
-	AUB_Firearm* CurrentFirearm;
-	AUB_MeleeWeapon* CurrentMeleeWeapon;
-
 public:
+	UPROPERTY(VisibleAnywhere, Category = "Input")
+	bool bIsPressingWeaponAction;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
 	UUB_CharacterInventory* Inventory;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
 	AUB_Weapon* CurrentWeapon;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
+	UAnimMontage* DenyAnimMontage; //look for an animation of player moving face like saying nope
 
 //Functions
 public:
@@ -169,21 +141,11 @@ protected:
 	void CreateInitialWeapon();
 	void EquipWeapon(AUB_Weapon* Weapon);
 
-	void SetActionState(EActionState NewActionState);
-
-	void StartWeaponAction(); //can be melee or firearm
+	void StartWeaponAction();
 	void StopWeaponAction();
-	
-	void VerifyAutomaticFirearm();
-
+	void StartAdditionalWeaponAction();
+	void StartWeaponPunchAction();
 	void ChangeWeaponMode();
-
-	void ReloadWeapon();
-	void StopReloadingWeapon();
-
-	void StartWeaponPunchAction(); //It does not mean meleeWeapon, it means weapon punch (golpe con el arma)
-
-	void PlayAnimMontage(UAnimMontage* animMontage);
 
 	void VerifyData();
 
@@ -199,16 +161,17 @@ public:
 	//override this function to make eyesViewPoint locate in the current camera
 	virtual FVector GetPawnViewLocation() const override;
 
+	//THESE FUNCTIONS CAN BE CALLED from Anim notifiers
+	//UFUNCTION(BlueprintCallable)
 	void OnFinishedWeaponAction();
-	UFUNCTION(BlueprintCallable)
-	void OnFinishedReloadingWeapon(); //called from anim notify
+	UFUNCTION(BlueprintCallable) //called from BP
+	void OnFinishedAdditionalWeaponAction();
 	void OnFinishedWeaponPunchAction();
 
 	//MeleeCombos = These combo functions are going to be called from animNotify in eventGraph
+	//(they could be made in an animationNotify class, but I want to have it in BP to practice in BP too)
 	UFUNCTION(BlueprintCallable)
-	void SetMeleeComboEnabled(bool NewState);
+	void ANEnableMeleeCombo();
 	UFUNCTION(BlueprintCallable)
-	void ResetMeleeCombo();
-
-	AUB_MeleeWeapon* GetCurrentMeleeWeapon(); //for some animations to acces its collider
+	void ANResetMeleeCombo();
 };
