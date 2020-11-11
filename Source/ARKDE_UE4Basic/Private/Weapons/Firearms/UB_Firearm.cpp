@@ -43,6 +43,7 @@ void AUB_Firearm::BeginPlay()
 void AUB_Firearm::StartAction() 
 {
 	Super::StartAction();
+	if (bIsPunching) return; //TODO: Remove later, make work return work from base
 
 	//fire is more important than reload, verify first if ammo is enough to fire and stop reloading
 	if (bIsReloading) {
@@ -66,6 +67,7 @@ void AUB_Firearm::StartAction()
 void AUB_Firearm::StartAdditionalAction() 
 {
 	Super::StartAdditionalAction();
+	if (bIsPunching) return; //TODO: Remove later, make work return work from base
 
 	if (bIsFiring) CancelFiring();
 	Reload();
@@ -148,6 +150,9 @@ void AUB_Firearm::Reload()
 		bIsReloading = true;
 		//Call animation in owner
 		PlayAnimMontageInOwner(ReloadAnimMontage);
+	}
+	else {
+		PlayAnimMontageInOwner(CurrentOwnerCharacter->DenyAnimMontage);
 	}
 }
 void AUB_Firearm::FinishedReloading()

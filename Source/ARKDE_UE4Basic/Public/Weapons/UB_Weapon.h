@@ -65,7 +65,7 @@ protected:
 	UFUNCTION() //must have this if is gonna be added to OnComponentBeginOverlap
 	virtual void ApplyPunchDamage(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
-	void PlayAnimMontageInOwner(UAnimMontage* AnimMontage);
+	void PlayAnimMontageInOwner(UAnimMontage* AnimMontage, float InPlayRate = 1.f, FName StartSectionName = NAME_None);
 	void StopAnimMontageInOwner(UAnimMontage* AnimMontage);
 
 public:	

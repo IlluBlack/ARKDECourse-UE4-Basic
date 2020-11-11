@@ -23,6 +23,7 @@ AUB_MeleeWeapon::AUB_MeleeWeapon()
 	MeleeDetectorComponent->SetCollisionResponseToChannel(OCC_ENEMY, ECR_Overlap);
 	DisableMeleeDetector();
 
+	bUseAnimMontageSections = true;
 	StepComboDamageMultiplier = 1.0f;
 	CurrentDamageMultiplier = 1.0f;
 }
@@ -45,12 +46,13 @@ void AUB_MeleeWeapon::EquipWeapon()
 void AUB_MeleeWeapon::StartAction()
 {
 	Super::StartAction();
+	if (bIsPunching) return; //TODO: Remove later, make work return work from base
 
 	//the melee collider is enabled in the anim notify
-	if (MeleeAnimMontages.Num() > 1) { //has combo animations
+	if (GetNumCombos() > 1) { //has combo animations
 		if (bIsAttacking) {
 			if (bIsMeleeComboEnabled) {
-				if (CurrentStepMeleeCombo < (MeleeAnimMontages.Num() - 1)) { //-1 because the last anim has no next stepCombo
+				if (CurrentStepMeleeCombo < (GetNumCombos() - 1)) { //-1 because the last anim has no next stepCombo
 					CurrentStepMeleeCombo++;
 					SetMeleeComboEnabled(false); //don't make more than one combo in the same animation
 				}
@@ -72,8 +74,27 @@ void AUB_MeleeWeapon::StartAction()
 	//Update damage multiplier of the weapon
 	CurrentDamageMultiplier = StepComboDamageMultiplier * (CurrentStepMeleeCombo+1); //we use CurrentStepMeleeCombo+1 because currentStepMeleeCombo starts in zero
 	
-	if (CurrentStepMeleeCombo >= MeleeAnimMontages.Num()) UE_LOG(LogTemp, Error, TEXT("CurrentStepMeleeCombo is greater than the MeleeAnimMontages.Num"));
-	PlayAnimMontageInOwner(MeleeAnimMontages[CurrentStepMeleeCombo]);
+	if (CurrentStepMeleeCombo >= GetNumCombos()) UE_LOG(LogTemp, Error, TEXT("CurrentStepMeleeCombo is greater than the MeleeAnimMontages or AnimMontageSections"));
+	
+	//Play Animation
+	if (bUseAnimMontageSections) {
+		/*if (CurrentStepMeleeCombo <= 0) {
+			//It's the first one, play the animMontage
+			PlayAnimMontageInOwner(MeleeAnimMontage);
+		}
+		else if (IsValid(CurrentOwnerCharacter)) { //set next animMontage
+			CurrentOwnerCharacter->SetNextSectionAnimMontage(AnimMontageSections[CurrentStepMeleeCombo - 1],
+				AnimMontageSections[CurrentStepMeleeCombo], MeleeAnimMontage);
+		}*/
+		/*if (IsValid(CurrentOwnerCharacter)) { //play section of animMontage
+			CurrentOwnerCharacter->PlaySectionAnimMontage(AnimMontageSections[CurrentStepMeleeCombo], MeleeAnimMontage);
+		}*/
+
+		PlayAnimMontageInOwner(MeleeAnimMontage, 1.0f, AnimMontageSections[CurrentStepMeleeCombo]);
+	}
+	else {
+		PlayAnimMontageInOwner(MeleeAnimMontages[CurrentStepMeleeCombo]); //play in the array of animMontages
+	}
 }
 
 //Called from anim notifier when finished
@@ -88,6 +109,7 @@ void AUB_MeleeWeapon::OnFinishedAction()
 void AUB_MeleeWeapon::StartAdditionalAction()
 {
 	Super::StartAdditionalAction();
+	if (bIsPunching) return; //TODO: Remove later, make work return work from base
 
 	//Play a nope animation
 	PlayAnimMontageInOwner(CurrentOwnerCharacter->DenyAnimMontage);
@@ -96,6 +118,7 @@ void AUB_MeleeWeapon::StartAdditionalAction()
 //Melee Detector
 void AUB_MeleeWeapon::EnableMeleeDetector()
 {
+	bAppliedDamage = false; //reset appliedDamage
 	MeleeDetectorComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 }
 void AUB_MeleeWeapon::DisableMeleeDetector()
@@ -104,16 +127,27 @@ void AUB_MeleeWeapon::DisableMeleeDetector()
 }
 void AUB_MeleeWeapon::ApplyMeleeDamage(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	if (bAppliedDamage) return;
+
 	if (IsValid(OtherActor)) {
 		AActor* Owner = GetOwner();
 
 		if (IsValid(Owner)) {
 			UGameplayStatics::ApplyPointDamage(OtherActor, Damage * CurrentDamageMultiplier, SweepResult.Location, SweepResult, Owner->GetInstigatorController(), this, nullptr);
+			bAppliedDamage = true;
 		}
 	}
 }
 
 //Combos
+int AUB_MeleeWeapon::GetNumCombos()
+{
+	if (bUseAnimMontageSections) {
+		return AnimMontageSections.Num();
+	}
+	
+	return MeleeAnimMontages.Num();
+}
 void AUB_MeleeWeapon::ResetMeleeCombo()
 {
 	SetMeleeComboEnabled(false);

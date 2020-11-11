@@ -20,10 +20,16 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UCapsuleComponent* MeleeDetectorComponent; //This collider can be different from the punch detector, I made another one because it can depend on the type of melee weapon
 
+private:
+	UPROPERTY(VisibleAnywhere, Category = "Melee")
+	bool bAppliedDamage; //Just make damage once
+
 protected:
 	//Melee weapons can have combos or not, if meleeAnimMontages is > 1 then there is combos
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Firearm")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Melee")
 	bool bIsAttacking;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
+	bool bUseAnimMontageSections; //this means all animations comes from the same anim montage with different sections
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combos")
 	bool bIsMeleeComboEnabled; //combos are enabled just in some specific part of the animation
@@ -35,8 +41,12 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combos")
 	float CurrentDamageMultiplier;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
-	TArray<UAnimMontage*> MeleeAnimMontages; //melee animation or combo animations
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation") //meta = (EditCondition = !bUseAnimMontageSections)
+	TArray<UAnimMontage*> MeleeAnimMontages; //melee animation or combo animations, different animMontages
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation", meta = (EditCondition = bUseAnimMontageSections))
+	UAnimMontage* MeleeAnimMontage; //animMontage
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation", meta = (EditCondition = bUseAnimMontageSections))
+	TArray<FName> AnimMontageSections; //name of the sections
 
 public:
 	AUB_MeleeWeapon();
@@ -47,6 +57,9 @@ protected:
 	//Melee detector
 	UFUNCTION()
 	virtual void ApplyMeleeDamage(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	//Combos
+	int GetNumCombos();
 
 public:
 	virtual void EquipWeapon() override;

@@ -12,6 +12,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Animation/AnimInstance.h"
 
 // Sets default values
 AUB_Character::AUB_Character()
@@ -430,6 +431,14 @@ void AUB_Character::ANResetMeleeCombo()
 	}
 }
 
+//Animation
+void AUB_Character::PlaySectionAnimMontage(FName Section, const UAnimMontage* Montage)
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (IsValid(AnimInstance) && IsValid(Montage)) {
+		AnimInstance->Montage_JumpToSection(Section, Montage);
+	}
+}
 
 
 //Data

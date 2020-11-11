@@ -161,6 +161,9 @@ public:
 	//override this function to make eyesViewPoint locate in the current camera
 	virtual FVector GetPawnViewLocation() const override;
 
+	//Animation
+	void PlaySectionAnimMontage(FName Section, const UAnimMontage* Montage);
+
 	//THESE FUNCTIONS CAN BE CALLED from Anim notifiers
 	//UFUNCTION(BlueprintCallable)
 	void OnFinishedWeaponAction();
