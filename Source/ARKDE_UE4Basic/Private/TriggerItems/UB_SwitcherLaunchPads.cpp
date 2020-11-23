@@ -4,9 +4,14 @@
 #include "UB_SwitcherLaunchPads.h"
 #include "Components/StaticMeshComponent.h"
 #include "UB_LaunchPad.h"
+#include "Components/BoxComponent.h"
 
 AUB_SwitcherLaunchPads::AUB_SwitcherLaunchPads()
 {
+	//Physic collision with world
+	MainColliderComponent->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldDynamic, ECollisionResponse::ECR_Block);
+	MainColliderComponent->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldStatic, ECollisionResponse::ECR_Block);
+
 	SwitcherMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Switcher"));
 	SwitcherMeshComponent->SetupAttachment(RootComponent);
 

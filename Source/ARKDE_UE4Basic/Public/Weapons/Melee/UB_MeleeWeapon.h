@@ -41,11 +41,11 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combos")
 	float CurrentDamageMultiplier;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation") //meta = (EditCondition = !bUseAnimMontageSections)
-	TArray<UAnimMontage*> MeleeAnimMontages; //melee animation or combo animations, different animMontages
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation", meta = (EditCondition = bUseAnimMontageSections))
-	UAnimMontage* MeleeAnimMontage; //animMontage
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation", meta = (EditCondition = bUseAnimMontageSections))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation", meta = (EditCondition = "!bUseAnimMontageSections"))
+	TArray<UAnimMontage*> MeleeAnimMontagesWithoutSections; //melee animation or combo animations, different animMontages
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation", meta = (EditCondition = "bUseAnimMontageSections"))
+	UAnimMontage* MeleeAnimMontageWithSections; //animMontage
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation", meta = (EditCondition = "bUseAnimMontageSections"))
 	TArray<FName> AnimMontageSections; //name of the sections
 
 public:

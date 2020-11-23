@@ -78,22 +78,10 @@ void AUB_MeleeWeapon::StartAction()
 	
 	//Play Animation
 	if (bUseAnimMontageSections) {
-		/*if (CurrentStepMeleeCombo <= 0) {
-			//It's the first one, play the animMontage
-			PlayAnimMontageInOwner(MeleeAnimMontage);
-		}
-		else if (IsValid(CurrentOwnerCharacter)) { //set next animMontage
-			CurrentOwnerCharacter->SetNextSectionAnimMontage(AnimMontageSections[CurrentStepMeleeCombo - 1],
-				AnimMontageSections[CurrentStepMeleeCombo], MeleeAnimMontage);
-		}*/
-		/*if (IsValid(CurrentOwnerCharacter)) { //play section of animMontage
-			CurrentOwnerCharacter->PlaySectionAnimMontage(AnimMontageSections[CurrentStepMeleeCombo], MeleeAnimMontage);
-		}*/
-
-		PlayAnimMontageInOwner(MeleeAnimMontage, 1.0f, AnimMontageSections[CurrentStepMeleeCombo]);
+		PlayAnimMontageInOwner(MeleeAnimMontageWithSections, 1.0f, AnimMontageSections[CurrentStepMeleeCombo]);
 	}
 	else {
-		PlayAnimMontageInOwner(MeleeAnimMontages[CurrentStepMeleeCombo]); //play in the array of animMontages
+		PlayAnimMontageInOwner(MeleeAnimMontagesWithoutSections[CurrentStepMeleeCombo]); //play in the array of animMontages
 	}
 }
 
@@ -146,7 +134,7 @@ int AUB_MeleeWeapon::GetNumCombos()
 		return AnimMontageSections.Num();
 	}
 	
-	return MeleeAnimMontages.Num();
+	return MeleeAnimMontagesWithoutSections.Num();
 }
 void AUB_MeleeWeapon::ResetMeleeCombo()
 {

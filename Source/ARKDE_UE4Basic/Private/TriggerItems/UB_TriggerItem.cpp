@@ -13,9 +13,7 @@ AUB_TriggerItem::AUB_TriggerItem()
 
 	MainColliderComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("MainColliderComponent"));
 	MainColliderComponent->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	//Physic collision with world
-	MainColliderComponent->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldDynamic, ECollisionResponse::ECR_Block);
-	MainColliderComponent->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldStatic, ECollisionResponse::ECR_Block);
+	//Overlap Pawns
 	MainColliderComponent->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
 	//Enable collisions
 	MainColliderComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);

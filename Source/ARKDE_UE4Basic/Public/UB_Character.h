@@ -9,11 +9,13 @@
 class UCameraComponent;
 class USpringArmComponent;
 class UUB_CharacterInventory;
+class UUB_HealthComponent;
 class AUB_Weapon;
 class AUB_Firearm;
 class AUB_MeleeWeapon;
 class UAnimMontage;
 class UAnimInstance;
+class AUB_GameMode;
 
 UENUM(BlueprintType)
 enum class EMovementState : uint8
@@ -37,6 +39,8 @@ protected:
 	USpringArmComponent* TPSSpringArmComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UCameraComponent* TPSCameraComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UUB_HealthComponent* HealthComponent;
 
 //Variables
 private: //these ones are used just for internal logic
@@ -87,6 +91,11 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	TSubclassOf<AUB_Weapon> InitialWeaponClass;
 
+	AUB_GameMode* GameModeReference;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Death")
+	bool bShouldDissapearWhenDead;
+
 public:
 	UPROPERTY(VisibleAnywhere, Category = "Input")
 	bool bIsPressingWeaponAction;
@@ -109,6 +118,7 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	void InitializeReferences();
+	void SetupCharacterMovement();
 
 	void MoveForward(float value);
 	void MoveRight(float value);
@@ -147,6 +157,9 @@ protected:
 	void StartWeaponPunchAction();
 	void ChangeWeaponMode();
 
+	UFUNCTION()
+	void OnHealthChanged(UUB_HealthComponent* CurrentHealthComponent, AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser);
+
 	void VerifyData();
 
 public:	
@@ -165,7 +178,6 @@ public:
 	void PlaySectionAnimMontage(FName Section, const UAnimMontage* Montage);
 
 	//THESE FUNCTIONS CAN BE CALLED from Anim notifiers
-	//UFUNCTION(BlueprintCallable)
 	void OnFinishedWeaponAction();
 	UFUNCTION(BlueprintCallable) //called from BP
 	void OnFinishedAdditionalWeaponAction();
@@ -177,4 +189,7 @@ public:
 	void ANEnableMeleeCombo();
 	UFUNCTION(BlueprintCallable)
 	void ANResetMeleeCombo();
+
+	//Dead
+	bool ShouldDissapearWhenDead() { return bShouldDissapearWhenDead; };
 };

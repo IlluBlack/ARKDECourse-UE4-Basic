@@ -5,9 +5,14 @@
 #include "UB_Character.h"
 #include "Components/StaticMeshComponent.h"
 #include "Materials/Material.h"
+#include "Components/BoxComponent.h"
 
 AUB_LaunchPad::AUB_LaunchPad()
 {
+	//Physic collision with world
+	MainColliderComponent->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldDynamic, ECollisionResponse::ECR_Block);
+	MainColliderComponent->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldStatic, ECollisionResponse::ECR_Block);
+
 	LauchPadMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LauchPad"));
 	LauchPadMeshComponent->SetupAttachment(RootComponent);
 

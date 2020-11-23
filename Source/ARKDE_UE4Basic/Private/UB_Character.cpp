@@ -11,8 +11,11 @@
 #include "Components/InputComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/UB_HealthComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Animation/AnimInstance.h"
+#include "Engine/World.h"
+#include "Core/UB_GameMode.h"
 
 // Sets default values
 AUB_Character::AUB_Character()
@@ -33,6 +36,8 @@ AUB_Character::AUB_Character()
 	TPSCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("TPS_CameraComponent"));
 	TPSCameraComponent->SetupAttachment(TPSSpringArmComponent);
 
+	HealthComponent = CreateDefaultSubobject<UUB_HealthComponent>(TEXT("HealthComponent"));
+
 	bUseHoldToSprint = true;
 	MaxRunSpeed = 800;
 	MaxSlideSpeed = 1000;
@@ -50,6 +55,21 @@ void AUB_Character::BeginPlay()
 	CreateInventory();
 	CreateInitialWeapon();
 	
+	SetupCharacterMovement();
+
+	HealthComponent->OnHealthChangedDelegate.AddDynamic(this, &AUB_Character::OnHealthChanged);
+
+	//Always at the end
+	VerifyData();
+}
+
+void AUB_Character::InitializeReferences()
+{
+	GameModeReference = Cast<AUB_GameMode>(GetWorld()->GetAuthGameMode());
+}
+
+void AUB_Character::SetupCharacterMovement()
+{
 	MaxWalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
 	MaxCrouchSpeed = GetCharacterMovement()->MaxWalkSpeedCrouched;
 	//StandingCapsuleHeight = GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
@@ -60,14 +80,6 @@ void AUB_Character::BeginPlay()
 	bToggleSprintState = false;
 	bIsPressingCrouchOrSlide = false;
 	ResetMaxMovementSpeed();
-
-	//Always at the end
-	VerifyData();
-}
-
-void AUB_Character::InitializeReferences()
-{
-	//initialize here if you need some references...
 }
 
 // Called every frame
@@ -440,6 +452,15 @@ void AUB_Character::PlaySectionAnimMontage(FName Section, const UAnimMontage* Mo
 	}
 }
 
+//Health
+void AUB_Character::OnHealthChanged(UUB_HealthComponent* CurrentHealthComponent, AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
+{
+	if (HealthComponent->IsDead()) {
+		if (IsValid(GameModeReference)) {
+			GameModeReference->GameOver(this);
+		}
+	}
+}
 
 //Data
 void AUB_Character::VerifyData()
