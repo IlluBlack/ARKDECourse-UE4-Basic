@@ -17,7 +17,7 @@ class ARKDE_UE4BASIC_API UUB_HealthComponent : public UActorComponent
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health Component", meta = (ClampMin = 0.0, UIMin = 0.0))
 	float MaxHealth;
-	UPROPERTY(BlueprintReadWrite, Category = "Health Component")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Health Component")
 	float Health; //CurrentHealth
 	UPROPERTY(BlueprintReadOnly, Category = "Health Component")
 	AActor* Owner;
