@@ -100,7 +100,7 @@ void AUB_Weapon::ApplyPunchDamage(UPrimitiveComponent* OverlappedComponent, AAct
 void AUB_Weapon::PlayAnimMontageInOwner(UAnimMontage* AnimMontage, float InPlayRate, FName StartSectionName)
 {
 	if (IsValid(CurrentOwnerCharacter) && IsValid(AnimMontage)) {
-		CurrentOwnerCharacter->PlayAnimMontage(AnimMontage, InPlayRate, StartSectionName);
+		CurrentOwnerCharacter->PlayAnimMontage(AnimMontage, false, InPlayRate, StartSectionName);
 	}
 }
 void AUB_Weapon::StopAnimMontageInOwner(UAnimMontage* AnimMontage)

@@ -9,6 +9,7 @@
 class UCameraComponent;
 class USpringArmComponent;
 class UUB_CharacterInventory;
+class AUB_CharacterUltimate;
 class UUB_HealthComponent;
 class AUB_Weapon;
 class AUB_Firearm;
@@ -75,13 +76,18 @@ protected:
 	float MaxSlideSpeed;
 	
 	//TODO: Maybe fix this slider not with time but with velocity, if it's going down a mountain, they should be able to go down all sliding
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement", meta = (ClampMin = "0.1", UIMin = "0.1"))
+	float MinSpeedToSlide;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement", meta = (ClampMin = "0.1", UIMin = "0.1"))
+	float MinSlideDuration; //if speed is minSpeedToSlide what's the duration of sliding
+	//UPROPERTY(BlueprintReadOnly, Category = "Movement")
+	//float CurrentSlidingTime;
+	UPROPERTY(BlueprintReadOnly, Category = "Movement")
+	float CurrentSlideDuration;
+	FTimerHandle TimerHandle_Slide;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement", meta = (ClampMin = "0.0", UIMin = "0.1"))
-	float MinDurationSlide; //if velocity is maxWalkSpeed what's the duration of sliding
-	UPROPERTY(BlueprintReadOnly, Category = "Movement")
-	float CurrentSlidingTime;
-	UPROPERTY(BlueprintReadOnly, Category = "Movement")
-	float DurationSlide;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
+	float SpeedModifier = 1.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	TSubclassOf<UUB_CharacterInventory> InventoryClass;
@@ -91,10 +97,28 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	TSubclassOf<AUB_Weapon> InitialWeaponClass;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ultimate")
+	TSubclassOf<AUB_CharacterUltimate> UltimateClass;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ultimate")
+	AUB_CharacterUltimate* CurrentUltimate;
+	UPROPERTY(BlueprintReadOnly, Category = "Ultimate")
+	bool bCanUseUltimate;
+	UPROPERTY(BlueprintReadOnly, Category = "Ultimate")
+	bool bIsUsingUltimate;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ultimate", meta = (ClampMin = "0.0", UIMin = "0.1"))
+	float MaxUltimateXP;
+	UPROPERTY(BlueprintReadOnly, Category = "Ultimate")
+	float CurrentUltimateXP;
+
 	AUB_GameMode* GameModeReference;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Death")
 	bool bShouldDissapearWhenDead;
+
+	//Animation
+	UPROPERTY(BlueprintReadOnly, Category = "Animation")
+	bool bIsFullBodyAnimation; //use as flag to know if animMontage is FULL_BODY or not
+	FTimerHandle TimerHandle_FullBodyAnimation;
 
 public:
 	UPROPERTY(VisibleAnywhere, Category = "Input")
@@ -107,7 +131,7 @@ public:
 	AUB_Weapon* CurrentWeapon;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
-	UAnimMontage* DenyAnimMontage; //look for an animation of player moving face like saying nope
+	UAnimMontage* DenyAnimMontage;
 
 //Functions
 public:
@@ -143,8 +167,9 @@ protected:
 	void Slide();
 	void StopSliding();
 
-	void ResetMaxMovementSpeed();
 	void ResolveMovement(); //**Define what movement apply**
+	void ResolveMaxMovementSpeed(bool forceUpdate = false);
+	void ResolveMaxCrouchMovementSpeed();
 
 	void CreateInventory();
 
@@ -159,6 +184,14 @@ protected:
 
 	UFUNCTION()
 	void OnHealthChanged(UUB_HealthComponent* CurrentHealthComponent, AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser);
+
+	void InitializeUltimate();
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void BP_EarnUltimateXP(float XP);
+	void StartUltimate();
+	void ResetUltimateXP();
+
+	void ResetFullBodyAnimationFlag();
 
 	void VerifyData();
 
@@ -175,6 +208,7 @@ public:
 	virtual FVector GetPawnViewLocation() const override;
 
 	//Animation
+	float PlayAnimMontage(UAnimMontage* AnimMontage, bool bIsFullBody = false, float InPlayRate = 1.f, FName StartSectionName = NAME_None);
 	void PlaySectionAnimMontage(FName Section, const UAnimMontage* Montage);
 
 	//THESE FUNCTIONS CAN BE CALLED from Anim notifiers
@@ -189,6 +223,13 @@ public:
 	void ANEnableMeleeCombo();
 	UFUNCTION(BlueprintCallable)
 	void ANResetMeleeCombo();
+
+	//Ultimate
+	void EarnUltimateXP(float XP);
+	void OnFinishedUltimate();
+
+	void SetSpeedModifier(float SpeedMod);
+	void SetSpeedModifierToDefault();
 
 	//Dead
 	bool ShouldDissapearWhenDead() { return bShouldDissapearWhenDead; };

@@ -4,6 +4,7 @@
 #include "UB_CharacterInventory.h"
 #include "UB_Weapon.h"
 #include "UB_MeleeWeapon.h"
+#include "UB_CharacterUltimate.h"
 
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -16,6 +17,7 @@
 #include "Animation/AnimInstance.h"
 #include "Engine/World.h"
 #include "Core/UB_GameMode.h"
+#include "Runtime/Engine/Public/TimerManager.h"
 
 // Sets default values
 AUB_Character::AUB_Character()
@@ -40,10 +42,13 @@ AUB_Character::AUB_Character()
 
 	bUseHoldToSprint = true;
 	MaxRunSpeed = 800;
-	MaxSlideSpeed = 1000;
-	MinDurationSlide = 1.0f;
+	MaxSlideSpeed = 1200;
+	MinSpeedToSlide = 820;
+
+	MaxUltimateXP = 100.0f;
 
 	WeaponSocketName = "SCK_Weapon";
+	bIsFullBodyAnimation = false;
 }
 
 // Called when the game starts or when spawned
@@ -51,9 +56,11 @@ void AUB_Character::BeginPlay()
 {
 	Super::BeginPlay();
 
+	ResetFullBodyAnimationFlag();
 	InitializeReferences();
 	CreateInventory();
 	CreateInitialWeapon();
+	InitializeUltimate();
 	
 	SetupCharacterMovement();
 
@@ -79,23 +86,16 @@ void AUB_Character::SetupCharacterMovement()
 	bIsPressingSprint = false;
 	bToggleSprintState = false;
 	bIsPressingCrouchOrSlide = false;
-	ResetMaxMovementSpeed();
+	ResolveMaxMovementSpeed(true);
+	ResolveMaxCrouchMovementSpeed();
+
+	SetSpeedModifierToDefault();
 }
 
 // Called every frame
 void AUB_Character::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	//Counter to finish sliding
-	if (ECurrentMovementState == EMovementState::Sliding) {
-		CurrentSlidingTime += DeltaTime;
-
-		if (CurrentSlidingTime >= DurationSlide) {
-			StopSliding();
-		}
-	}
-
 }
 
 //ViewLocation is going to be the camera position
@@ -142,6 +142,9 @@ void AUB_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 
 	PlayerInputComponent->BindAction("WeaponPunchAction", IE_Pressed, this, &AUB_Character::StartWeaponPunchAction);
 	//PlayerInputComponent->BindAction("WeaponPunchAction", IE_Released, this, &AUB_Character::StopWeaponPunchAction);
+
+	PlayerInputComponent->BindAction("Ultimate", IE_Pressed, this, &AUB_Character::StartUltimate);
+	//PlayerInputComponent->BindAction("Ultimate", IE_Released, this, &AUB_Character::StopUltimate);
 }
 
 //Move
@@ -250,15 +253,15 @@ void AUB_Character::Slide()
 
 	//First crouch
 	Crouch();
-	//as this crouch is controlled by character movement change max crouch speed
-	GetCharacterMovement()->MaxWalkSpeedCrouched = MaxSlideSpeed;
 
 	//then slide
 	float currentSpeed = GetVelocity().Size(); //magnitude
-	DurationSlide = (currentSpeed*MinDurationSlide)/MaxWalkSpeed;
-	CurrentSlidingTime = 0;
+	CurrentSlideDuration = (currentSpeed*MinSlideDuration)/MinSpeedToSlide;
+	GetWorldTimerManager().SetTimer(TimerHandle_Slide, this, &AUB_Character::StopSliding, CurrentSlideDuration, false);
 
 	ECurrentMovementState = EMovementState::Sliding;
+	//as this crouch is controlled by character movement change max crouch speed
+	ResolveMaxCrouchMovementSpeed();
 }
 
 void AUB_Character::StopSliding()
@@ -266,7 +269,8 @@ void AUB_Character::StopSliding()
 	bIsPressingCrouchOrSlide = false; //Not allow player to continue sliding, if the time was over
 	StopCrouching(); //Slide is actually collide as crouching then stop crouching
 
-	GetCharacterMovement()->MaxWalkSpeedCrouched = MaxCrouchSpeed; //return crouch speed to its default value
+	ResolveMaxCrouchMovementSpeed(); //return crouch speed to its default value
+	GetWorldTimerManager().ClearTimer(TimerHandle_Slide);
 }
 
 //Movement
@@ -274,40 +278,24 @@ void AUB_Character::ResolveMovement() //Reset, if user pressed keys or was press
 {
 	if (ECurrentMovementState == EMovementState::Standing) {
 		if (bIsPressingCrouchOrSlide) {
-			if (bUseHoldToSprint) {
-				if (bIsPressingSprint) {
-					Slide();
-				}
-				else {
-					Crouch();
-				}
+			float CurrentSpeed = GetVelocity().Size(); //magnitude
+
+			if (CurrentSpeed >= MinSpeedToSlide) {
+				Slide();
 			}
 			else {
-				if (bToggleSprintState) {
-					if (GetVelocity().Size() > MaxWalkSpeed) //if it's actually running
-						Slide();
-					else
-						Crouch();
-				}
-				else {
-					Crouch();
-				}
+				Crouch();
 			}
 		}
 	}
 
-	ResetMaxMovementSpeed();
+	ResolveMaxMovementSpeed();
 }
-void AUB_Character::ResetMaxMovementSpeed()
+void AUB_Character::ResolveMaxMovementSpeed(bool forceUpdate)
 {
-	bool updateSpeed = false;
+	bool updateWalkSpeed = false; //do not update always just when necessary
+
 	float currentMaxSpeed;
-	//Update manually velocity if I'm controlling crouch by myself
-	/*if (ECurrentMovementState == EMovementState::Crouching) {
-		currentMaxSpeed = GetCharacterMovement()->MaxWalkSpeedCrouched;
-		updateSpeed = true;
-	}
-	else */
 	if (ECurrentMovementState == EMovementState::Standing) {
 		if (bUseHoldToSprint) {
 			currentMaxSpeed = bIsPressingSprint ? MaxRunSpeed : MaxWalkSpeed;
@@ -316,12 +304,24 @@ void AUB_Character::ResetMaxMovementSpeed()
 			currentMaxSpeed = bToggleSprintState ? MaxRunSpeed : MaxWalkSpeed;
 		}
 
-		updateSpeed = true;
+		updateWalkSpeed = true;
 	}
 
-	if (updateSpeed) {
-		GetCharacterMovement()->MaxWalkSpeed = currentMaxSpeed;
+	if (updateWalkSpeed || forceUpdate) {
+		GetCharacterMovement()->MaxWalkSpeed = currentMaxSpeed * SpeedModifier;
 	}
+}
+void AUB_Character::ResolveMaxCrouchMovementSpeed()
+{
+	float currentMaxCrouchSpeed;
+	if (ECurrentMovementState == EMovementState::Sliding) {
+		currentMaxCrouchSpeed = MaxSlideSpeed;
+	}
+	else {
+		currentMaxCrouchSpeed = MaxCrouchSpeed; //return crouch speed to its default value
+	}
+
+	GetCharacterMovement()->MaxWalkSpeedCrouched = currentMaxCrouchSpeed * SpeedModifier;
 }
 
 //Launch
@@ -432,7 +432,6 @@ void AUB_Character::ANEnableMeleeCombo()
 		}
 	}
 }
-
 void AUB_Character::ANResetMeleeCombo()
 {
 	if (IsValid(CurrentWeapon)) {
@@ -443,9 +442,79 @@ void AUB_Character::ANResetMeleeCombo()
 	}
 }
 
+//Ultimate
+void AUB_Character::InitializeUltimate()
+{
+	if (IsValid(UltimateClass)) {
+		CurrentUltimate = GetWorld()->SpawnActor<AUB_CharacterUltimate>(UltimateClass);
+		if (IsValid(CurrentUltimate)) {
+			CurrentUltimate->AttachToActor(this, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+			CurrentUltimate->SetCharacterOwner(this);
+		}
+	}
+	ResetUltimateXP();
+}
+void AUB_Character::EarnUltimateXP(float XP)
+{
+	if (bCanUseUltimate || bIsUsingUltimate) return;
+
+	CurrentUltimateXP = FMath::Clamp(CurrentUltimateXP + XP, 0.0f, MaxUltimateXP);
+	if (CurrentUltimateXP >= MaxUltimateXP) {
+		bCanUseUltimate = true;
+	}
+
+	BP_EarnUltimateXP(XP);
+}
+void AUB_Character::StartUltimate()
+{
+	if (bCanUseUltimate && !bIsUsingUltimate) {
+		bCanUseUltimate = false;
+		bIsUsingUltimate = true;
+		CurrentUltimate->StartUltimate();
+	}
+}
+void AUB_Character::OnFinishedUltimate()
+{
+	bIsUsingUltimate = false;
+	ResetUltimateXP();
+}
+void AUB_Character::ResetUltimateXP() {
+	CurrentUltimateXP = 0.0f;
+}
+
+
+//Speed modifier
+void AUB_Character::SetSpeedModifier(float SpeedMod) {
+	SpeedModifier = SpeedMod;
+
+	//Update movement speeds
+	ResolveMaxMovementSpeed(true);
+	ResolveMaxCrouchMovementSpeed();
+}
+void AUB_Character::SetSpeedModifierToDefault() {
+	SetSpeedModifier(1.0f);
+}
+
 //Animation
+float AUB_Character::PlayAnimMontage(UAnimMontage* Montage, bool bIsFullBody, float InPlayRate, FName StartSectionName)
+{
+	bIsFullBodyAnimation = bIsFullBody;
+	const float AnimDuration = Super::PlayAnimMontage(Montage, InPlayRate, StartSectionName);
+
+	if (bIsFullBodyAnimation) {
+		//Wait until animation ends and reset fullBodyAnimation flag
+		GetWorldTimerManager().SetTimer(TimerHandle_FullBodyAnimation, this, &AUB_Character::ResetFullBodyAnimationFlag, AnimDuration, false);
+	}
+
+	return AnimDuration;
+}
+void AUB_Character::ResetFullBodyAnimationFlag()
+{
+	bIsFullBodyAnimation = false;
+}
 void AUB_Character::PlaySectionAnimMontage(FName Section, const UAnimMontage* Montage)
 {
+	bIsFullBodyAnimation = false; //at this moment anim section is always not fullbody
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (IsValid(AnimInstance) && IsValid(Montage)) {
 		AnimInstance->Montage_JumpToSection(Section, Montage);
@@ -467,6 +536,7 @@ void AUB_Character::VerifyData()
 {
 	if (!IsValid(CurrentWeapon)) UE_LOG(LogTemp, Warning, TEXT("Current weapon was not defined"));
 	if (!IsValid(Inventory)) UE_LOG(LogTemp, Error, TEXT("Character inventory was not created correctly"));
+	if (!IsValid(CurrentUltimate)) UE_LOG(LogTemp, Error, TEXT("Character ultimate was not created correctly"));
 
 	if (MaxWalkSpeed <= 0) UE_LOG(LogTemp, Error, TEXT("MaxWalkSpeed setted in CharacterMovementComponent is zero or less than zero"));
 	if (MaxCrouchSpeed <= 0) UE_LOG(LogTemp, Error, TEXT("MaxCrouchSpeed setted in CharacterMovementComponent is zero or less than zero"));
