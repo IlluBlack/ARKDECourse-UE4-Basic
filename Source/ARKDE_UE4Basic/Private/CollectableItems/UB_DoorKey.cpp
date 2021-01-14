@@ -12,19 +12,15 @@ AUB_DoorKey::AUB_DoorKey()
 	KeyMeshComponent->SetupAttachment(RootComponent);
 	KeyMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-	XPValue = 40.0f;
 	KeyTag = "KeyA";
 }
 
 void AUB_DoorKey::Pickup(AUB_Character* PickupCharacter)
 {
-	Super::Pickup(PickupCharacter);
-
 	//PickupCharacter->AddKey(KeyTag);
 	if (IsValid(PickupCharacter->Inventory)) {
 		PickupCharacter->Inventory->AddKey(KeyTag);
 	}
-	PickupCharacter->EarnUltimateXP(XPValue);
 
-	Destroy();
+	Super::Pickup(PickupCharacter);
 }

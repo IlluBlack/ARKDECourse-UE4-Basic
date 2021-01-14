@@ -18,6 +18,13 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USphereComponent* MainColliderComponent;
 
+//Variables
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collectable")
+	float XPValue;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Collectable")
+	bool bShouldDestroyWhenPickedUp;
+
 public:
 	// Sets default values for this pawn's properties
 	AUB_CollectableItem();

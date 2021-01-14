@@ -20,8 +20,6 @@ protected:
 
 //Variables
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Key")
-	float XPValue;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Key")
 	FName KeyTag; //tag to know what doors can this key open
 	

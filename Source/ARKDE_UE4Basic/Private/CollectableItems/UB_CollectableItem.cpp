@@ -23,6 +23,8 @@ AUB_CollectableItem::AUB_CollectableItem()
 	//Set as RootComponent, this way we can use NotifyActorBeginOverlap()
 	RootComponent = MainColliderComponent; 
 
+	XPValue = 20.0f;
+	bShouldDestroyWhenPickedUp = true;
 }
 
 // Called when the game starts or when spawned
@@ -54,5 +56,9 @@ void AUB_CollectableItem::NotifyActorBeginOverlap(AActor* OtherActor)
 
 void AUB_CollectableItem::Pickup(AUB_Character* PickupCharacter)
 {
+	PickupCharacter->EarnUltimateXP(XPValue); //Collectables give XP
 	BP_Pickup(PickupCharacter);
+
+	if(bShouldDestroyWhenPickedUp)
+		Destroy();
 }
