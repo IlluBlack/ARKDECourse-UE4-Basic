@@ -18,6 +18,13 @@ class UAnimMontage;
 class UAnimInstance;
 class AUB_GameMode;
 
+UENUM(Blueprintable)
+enum class EUB_CharacterType : uint8
+{
+	CharacterType_Player	UMETA(displayName = "Player"),
+	CharacterType_Enemy		UMETA(DisplayName = "Enemy"),
+};
+
 UENUM(BlueprintType)
 enum class EMovementState : uint8
 {
@@ -53,6 +60,9 @@ private: //these ones are used just for internal logic
 	bool bIsPressingCrouchOrSlide;
 
 protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	EUB_CharacterType CharacterType;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera")
 	bool bUseFirstPersonView;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera")
@@ -200,6 +210,9 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	UFUNCTION(BlueprintCallable)
+	EUB_CharacterType GetCharacterType() { return CharacterType; }
 
 	virtual void LaunchCharacter(FVector LaunchVelocity, bool bXYOverride, bool bZOverride) override;
 

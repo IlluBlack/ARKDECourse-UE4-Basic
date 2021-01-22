@@ -3,6 +3,7 @@
 
 #include "UB_VictoryZone.h"
 #include "Core/UB_GameMode.h"
+#include "UB_Character.h"
 #include "Engine/World.h"
 
 void AUB_VictoryZone::BeginPlay()
@@ -14,8 +15,10 @@ void AUB_VictoryZone::BeginPlay()
 
 void AUB_VictoryZone::OnCharacterOverlap(AUB_Character* Character)
 {
-	if (IsValid(GameModeReference)) {
-		Super::OnCharacterOverlap(Character);
-		GameModeReference->Victory(Character);
+	if (Character->GetCharacterType() == EUB_CharacterType::CharacterType_Player) {
+		if (IsValid(GameModeReference)) {
+			Super::OnCharacterOverlap(Character);
+			GameModeReference->Victory(Character);
+		}
 	}
 }

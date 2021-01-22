@@ -51,9 +51,13 @@ void AUB_Door::OnCollisionDetected(UPrimitiveComponent* OverlappedComponent, AAc
 	if (IsValid(OtherActor)) {
 		AUB_Character* OverlappedCharacter = Cast<AUB_Character>(OtherActor);
 
-		if (IsValid(OverlappedCharacter)) {
-			if (OverlappedCharacter->Inventory->HasKey(OpenWithKeyTag)) {
-				OpenDoor();
+		if (IsValid(OverlappedCharacter) && OverlappedCharacter->GetCharacterType() == EUB_CharacterType::CharacterType_Player) 
+		{
+			UUB_CharacterInventory* PlayerInventory = OverlappedCharacter->Inventory;
+			if (IsValid(PlayerInventory)) {
+				if (PlayerInventory->HasKey(OpenWithKeyTag)) {
+					OpenDoor();
+				}
 			}
 		}
 	}

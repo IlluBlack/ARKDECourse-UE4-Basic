@@ -48,7 +48,8 @@ void AUB_CollectableItem::NotifyActorBeginOverlap(AActor* OtherActor)
 	if (IsValid(OtherActor)) {
 		AUB_Character* OverlappedCharacter = Cast<AUB_Character>(OtherActor);
 
-		if (IsValid(OverlappedCharacter)) { //if it's actually the player
+		if (IsValid(OverlappedCharacter) && OverlappedCharacter->GetCharacterType() == EUB_CharacterType::CharacterType_Player) 
+		{ //if it's actually the player
 			Pickup(OverlappedCharacter);
 		}
 	}

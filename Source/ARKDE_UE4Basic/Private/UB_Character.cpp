@@ -524,7 +524,7 @@ void AUB_Character::PlaySectionAnimMontage(FName Section, const UAnimMontage* Mo
 //Health
 void AUB_Character::OnHealthChanged(UUB_HealthComponent* CurrentHealthComponent, AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
 {
-	if (HealthComponent->IsDead()) {
+	if (HealthComponent->IsDead() && GetCharacterType() == EUB_CharacterType::CharacterType_Player) {
 		if (IsValid(GameModeReference)) {
 			GameModeReference->GameOver(this);
 		}
