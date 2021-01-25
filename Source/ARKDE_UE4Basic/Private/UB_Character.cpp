@@ -470,7 +470,10 @@ void AUB_Character::StartUltimate()
 	if (bCanUseUltimate && !bIsUsingUltimate) {
 		bCanUseUltimate = false;
 		bIsUsingUltimate = true;
-		CurrentUltimate->StartUltimate();
+
+		if (IsValid(CurrentUltimate)) {
+			CurrentUltimate->StartUltimate();
+		}
 	}
 }
 void AUB_Character::OnFinishedUltimate()
