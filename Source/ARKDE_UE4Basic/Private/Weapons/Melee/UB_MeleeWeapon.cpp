@@ -120,7 +120,13 @@ void AUB_MeleeWeapon::ApplyMeleeDamage(UPrimitiveComponent* OverlappedComponent,
 	if (IsValid(OtherActor)) {
 		AActor* Owner = GetOwner();
 
-		if (IsValid(Owner)) {
+		if (IsValid(Owner) && (OtherActor != Owner)) 
+		{
+			AUB_Character* OtherActorCharacter = Cast<AUB_Character>(OtherActor);
+			if (IsValid(OtherActorCharacter)) {
+				if (OtherActorCharacter->GetCharacterType() == CurrentOwnerCharacter->GetCharacterType()) return;
+			}
+
 			UGameplayStatics::ApplyPointDamage(OtherActor, Damage * CurrentDamageMultiplier, SweepResult.Location, SweepResult, Owner->GetInstigatorController(), this, nullptr);
 			bAppliedDamage = true;
 		}

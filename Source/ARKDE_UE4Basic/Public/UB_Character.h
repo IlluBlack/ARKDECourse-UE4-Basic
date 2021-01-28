@@ -186,9 +186,11 @@ protected:
 	void CreateInitialWeapon();
 	void EquipWeapon(AUB_Weapon* Weapon);
 
+	UFUNCTION(BlueprintCallable)
 	void StartWeaponAction();
 	void StopWeaponAction();
 	void StartAdditionalWeaponAction();
+	UFUNCTION(BlueprintCallable)
 	void StartWeaponPunchAction();
 	void ChangeWeaponMode();
 

@@ -21,8 +21,7 @@ AUB_Weapon::AUB_Weapon()
 
 	PunchDetectorComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("PunchDetectorComponent"));
 	//PunchDetectorComponent->SetupAttachment(RootComponent); //I don't need it in a socket, assign in firearm or melee subclasses
-	PunchDetectorComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
-	PunchDetectorComponent->SetCollisionResponseToChannel(OCC_ENEMY, ECR_Overlap);
+	SetupPunchDetector();
 	DisablePunchDetector();
 
 	Damage = 30.0f;
@@ -35,6 +34,21 @@ void AUB_Weapon::BeginPlay()
 	Super::BeginPlay();
 	
 	PunchDetectorComponent->OnComponentBeginOverlap.AddDynamic(this, &AUB_Weapon::ApplyPunchDamage);
+}
+
+void AUB_Weapon::EquipWeapon() {
+	SetupPunchDetector();
+}
+
+void AUB_Weapon::SetupPunchDetector()
+{
+	PunchDetectorComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
+	if (IsValid(CurrentOwnerCharacter) && CurrentOwnerCharacter->GetCharacterType() == EUB_CharacterType::CharacterType_Player) {
+		PunchDetectorComponent->SetCollisionResponseToChannel(OCC_ENEMY, ECR_Overlap);
+	}
+	else {
+		PunchDetectorComponent->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECR_Overlap);
+	}
 }
 
 // Called every frame
@@ -90,7 +104,13 @@ void AUB_Weapon::ApplyPunchDamage(UPrimitiveComponent* OverlappedComponent, AAct
 	if (IsValid(OtherActor)) {
 		AActor* Owner = GetOwner();
 
-		if (IsValid(Owner)) {
+		if (IsValid(Owner) && (OtherActor != Owner)) 
+		{
+			AUB_Character* OtherActorCharacter = Cast<AUB_Character>(OtherActor);
+			if (IsValid(OtherActorCharacter)) {
+				if (OtherActorCharacter->GetCharacterType() == CurrentOwnerCharacter->GetCharacterType()) return; //enemy dont make damage to enemies
+			}
+
 			UGameplayStatics::ApplyPointDamage(OtherActor, PunchDamage, SweepResult.Location, SweepResult, Owner->GetInstigatorController(), this, nullptr);
 		}
 	}

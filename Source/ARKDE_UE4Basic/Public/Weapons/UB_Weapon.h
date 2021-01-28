@@ -48,6 +48,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	void SetupPunchDetector();
 
 	//Primary action, fire...
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Weapon")
@@ -72,7 +73,7 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void EquipWeapon() {} //To reset variables inside the weapon or whatever needed
+	virtual void EquipWeapon(); //To reset variables inside the weapon or whatever needed
 
 	UFUNCTION(BlueprintCallable) //Don't put this UFUNCTION in classes that are inheriting
 	virtual void StartAction();
