@@ -37,6 +37,8 @@ protected:
 	int CurrentFireModeIdx;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Firearm")
+	float MaxAngleBulletSpread;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Firearm")
 	float FireRate;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Firearm")
 	float MagazineCapacity; //number of rounds bullets before having to reload

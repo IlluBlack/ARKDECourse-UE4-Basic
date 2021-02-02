@@ -20,6 +20,7 @@ AUB_Firearm::AUB_Firearm()
 	AvailableFireModes = { EFireMode::SemiAutomatic };
 	InitialFireModeIdx = 0;
 
+	MaxAngleBulletSpread = 2.2f;
 	FireRate = 1.0f;
 	MagazineCapacity = 8;
 

@@ -143,6 +143,11 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
 	UAnimMontage* DenyAnimMontage;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon", meta = (ClampMin = "0.0", UIMin = "0.0", ClamMax = "1.0", UIMax = "1.0"))
+	float Accuracy; //TODO in the player this could change depending on velocity and if the player is crouching or not
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Body Targets")
+	TArray<FName> BodyTargetsSocketName;
+
 //Functions
 public:
 	// Sets default values for this character's properties
@@ -188,6 +193,7 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void StartWeaponAction();
+	UFUNCTION(BlueprintCallable)
 	void StopWeaponAction();
 	void StartAdditionalWeaponAction();
 	UFUNCTION(BlueprintCallable)

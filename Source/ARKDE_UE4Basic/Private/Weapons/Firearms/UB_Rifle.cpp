@@ -2,6 +2,8 @@
 
 
 #include "UB_Rifle.h"
+#include "UB_Character.h"
+
 #include "ARKDE_UE4Basic.h"
 #include "GameFramework/Character.h"
 #include "Engine/World.h"
@@ -21,7 +23,7 @@ void AUB_Rifle::Fire()
 	Super::Fire();
 
 	AActor* Owner = GetOwner();
-	if (IsValid(Owner)) {
+	if (IsValid(Owner) && IsValid(CurrentOwnerCharacter)) {
 		FHitResult HitResult;
 
 		FVector EyeLocation;
@@ -29,7 +31,9 @@ void AUB_Rifle::Fire()
 		Owner->GetActorEyesViewPoint(EyeLocation, EyeRotation);
 
 		FVector ShotDirection = EyeRotation.Vector(); //it's the lookDirection
-		FVector TraceEnd = EyeLocation + (ShotDirection * TraceLenght);
+		//FVector TraceEnd = EyeLocation + (ShotDirection * TraceLenght);
+		const float Spread = FMath::DegreesToRadians(MaxAngleBulletSpread * (1.0f - CurrentOwnerCharacter->Accuracy)); //if Accuracy is 1 Spread is zero
+		FVector TraceEnd = EyeLocation + (FMath::VRandCone(ShotDirection, Spread) * TraceLenght);
 
 		FCollisionQueryParams QueryParams;
 		QueryParams.AddIgnoredActor(this); //ignore my weapon collision

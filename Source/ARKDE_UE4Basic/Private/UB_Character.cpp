@@ -49,6 +49,8 @@ AUB_Character::AUB_Character()
 
 	WeaponSocketName = "SCK_Weapon";
 	bIsFullBodyAnimation = false;
+
+	Accuracy = 1.0f;
 }
 
 // Called when the game starts or when spawned
