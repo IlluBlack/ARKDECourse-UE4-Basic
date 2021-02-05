@@ -8,12 +8,6 @@
 
 AUB_Enemy::AUB_Enemy()
 {
-	bCanMeleeAttack = true;
-	DistanceCloseWhenMelee = 180.0f;
-	MinDistanceToMeleeAttack = 300.0f;
-	bCanLongRangeAttack = true;
-	DistanceCloseWhenLongRange = 950.0f;
-	MinDistanceToLongRangeAttack = 1200.0f;
 	Accuracy = 0.4f;
 	AimError = 2.5f;
 

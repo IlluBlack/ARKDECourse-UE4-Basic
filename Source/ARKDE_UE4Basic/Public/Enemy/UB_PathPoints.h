@@ -29,4 +29,8 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+public:
+	UFUNCTION(BlueprintCallable)
+	int PathPointsLength() const { return PathPoints.Num(); }
+
 };

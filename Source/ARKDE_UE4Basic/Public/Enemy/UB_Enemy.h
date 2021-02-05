@@ -18,30 +18,19 @@ class ARKDE_UE4BASIC_API AUB_Enemy : public AUB_Character
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|Attack")
-	bool bCanMeleeAttack;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|Attack")
-	float DistanceCloseWhenMelee;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|Attack")
-	float MinDistanceToMeleeAttack;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|Attack")
-	bool bCanLongRangeAttack;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|Attack")
-	float DistanceCloseWhenLongRange;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|Attack")
-	float MinDistanceToLongRangeAttack; //TODO: This should depend on the type of weapon, not the same to have a shotgun or a rifle...
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|Attack")
 	float AimError; //+- error
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Navigation Path")
-	AUB_PathPoints* navigationPath;
+	FVector LongRangeTargetPoint;
+
+public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|Navigation Path")
 	bool bLoopPath;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|Navigation Path")
 	int DirectionIndexPath;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|Navigation Path")
 	float WaitingTimeOnPathPoint;
-
-	FVector LongRangeTargetPoint;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Navigation Path")
+	AUB_PathPoints* NavigationPath;
 
 public:
 	AUB_Enemy();
