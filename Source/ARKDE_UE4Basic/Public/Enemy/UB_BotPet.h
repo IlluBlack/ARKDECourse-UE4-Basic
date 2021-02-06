@@ -6,9 +6,11 @@
 #include "GameFramework/Pawn.h"
 #include "UB_BotPet.generated.h"
 
+class USphereComponent;
 class USkeletalMeshComponent;
-class USceneComponent;
 class AUB_Character;
+class UUB_HealthComponent;
+class UUB_ExplosionComponent;
 
 UCLASS()
 class ARKDE_UE4BASIC_API AUB_BotPet : public APawn
@@ -16,26 +18,46 @@ class ARKDE_UE4BASIC_API AUB_BotPet : public APawn
 	GENERATED_BODY()
 
 protected:
-	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	//USceneComponent* CustomRootComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	USphereComponent* MainColliderComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USkeletalMeshComponent* BotMeshComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UUB_HealthComponent* HealthComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	USphereComponent* SelfDestructionDetectorComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UUB_ExplosionComponent* ExplosionComponent;
 
 protected:
 	UPROPERTY(BlueprintReadOnly, Category = "References")
 	AUB_Character* PlayerCharacter;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Navigation")
+	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	FVector NextPathPoint;
-	UPROPERTY(EditDefaultsOnly, Category = "Navigation|Debug")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement|Debug")
 	bool bDrawNextPathPoint;
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
 	float MinDistanceToTarget;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
 	float ForceMagnitude;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
-	FName ForceBoneName;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Self Destruction")
+	bool bStartedSelfDestructionCountdown;
+	FTimerHandle TimerHandle_SelfDestructionCountdown;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Self Destruction")
+	float SelfDestructionCountdownFrequency;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Self Destruction")
+	float SelfDestructionCountdownDamage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Self Destruction")
+	bool bIsExploded;
+
+	UMaterialInstanceDynamic* BotMaterial;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Material")
+	FName MaterialTimeParameterName;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Material")
+	int MaterialIndex;
 
 public:
 	// Sets default values for this pawn's properties
@@ -47,6 +69,20 @@ protected:
 
 	UFUNCTION(BlueprintCallable, Category = "Navigation")
 	FVector GetNextPathPoint();
+
+	UFUNCTION()
+	void OnHealthChanged(UUB_HealthComponent* CurrentHealthComponent, AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser);
+
+	UFUNCTION()
+	void OnOtherActorsDetection(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	void SelfDamage();
+
+	void SelfDestruction();
+	UFUNCTION()
+	void OnExplode(UUB_ExplosionComponent* CurrentExplosionComponent, const TArray<AActor*> OverlappedActors);
+
+	
 
 public:	
 	// Called every frame

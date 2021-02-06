@@ -28,15 +28,13 @@ void AUB_AICEnemy::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//NOTE = At this moment NOT casting here, but in BP, why? I still don't know how to get the reference correctly, it just work correctly in BP
-
-	/*APawn* ControlledPawn = GetPawn();
+	APawn* ControlledPawn = K2_GetPawn();
 	if (IsValid(ControlledPawn)) {
 		AUB_Enemy* ControlledEnemy = Cast<AUB_Enemy>(ControlledPawn);
 	}
 	else {
 		UE_LOG(LogTemp, Error, TEXT("ControlledPawn is NULL"));
-	}*/
+	}
 	
 	if (IsValid(ControlledEnemy)) {
 		UBlackboardComponent* Blackboard = GetBlackboardComponent();

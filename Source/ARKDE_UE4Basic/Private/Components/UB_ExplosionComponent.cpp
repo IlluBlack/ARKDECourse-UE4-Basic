@@ -104,7 +104,7 @@ void UUB_ExplosionComponent::Explode()
 			bool bAppliedDamage = false;
 			if (bHasFalloffExplosion) {
 				bAppliedDamage = UGameplayStatics::ApplyRadialDamage(GetWorld(), ExplosionMaxDamage, ExplosionCenter, ExplosionOuterRadius, DamageType,
-					IgnoreActors, Owner, Owner->GetInstigatorController());
+					IgnoreActors, Owner, Owner->GetInstigatorController(), true);
 			}
 			else {
 				bAppliedDamage = UGameplayStatics::ApplyRadialDamageWithFalloff(GetWorld(), ExplosionMaxDamage, ExplosionMinDamage, ExplosionCenter,
@@ -121,8 +121,8 @@ void UUB_ExplosionComponent::Explode()
 	}
 
 	if (bDebugExplosion) {
-		DrawDebugSphere(GetWorld(), ExplosionCenter, ExplosionInnerRadius, 20, FColor::Yellow, false, 1.0f);
-		DrawDebugSphere(GetWorld(), ExplosionCenter, ExplosionOuterRadius, 20, FColor::White, false, 1.0f);
+		DrawDebugSphere(GetWorld(), ExplosionCenter, ExplosionInnerRadius, 20, FColor::Yellow, false, 5.0f, 0, 1.0f);
+		DrawDebugSphere(GetWorld(), ExplosionCenter, ExplosionOuterRadius, 20, FColor::White, false, 5.0f, 0, 1.0f);
 	}
 
 	if (IsValid(ExplosionEffect)) {

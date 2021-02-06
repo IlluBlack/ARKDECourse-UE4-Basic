@@ -16,6 +16,20 @@ class ARKDE_UE4BASIC_API UUB_ExplosionComponent : public UActorComponent
 
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Explosion Component")
+	TSubclassOf<UDamageType> DamageType; //if there's not assigned, it takes the default one
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Explosion Component|Debug")
+	bool bDebugExplosion;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Explosion Component|Effects")
+	UParticleSystem* ExplosionEffect;
+
+	FTimerHandle ExplosionDelayTimer;
+
+	TArray<AActor*> IgnoreActors;
+
+public:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Explosion Component")
 	bool bTakeEnvironmentIntoAccount; //if not it does not matter if it's behind a wall, it will get damage
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Explosion Component")
@@ -31,22 +45,8 @@ protected:
 	float ExplosionOuterRadius; //It's the full explosion radius
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Explosion Component")
-	TSubclassOf<UDamageType> DamageType; //if there's not assigned, it takes the default one
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Explosion Component")
 	float ExplosionDelay;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Explosion Component|Debug")
-	bool bDebugExplosion;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Explosion Component|Effects")
-	UParticleSystem* ExplosionEffect;
-
-	FTimerHandle ExplosionDelayTimer;
-
-	TArray<AActor*> IgnoreActors;
-
-public:
 	//Delegates
 	UPROPERTY(BlueprintAssignable)
 	FOnExplodeSignature OnExplodeDelegate;
