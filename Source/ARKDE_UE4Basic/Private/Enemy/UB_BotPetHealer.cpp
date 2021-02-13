@@ -71,6 +71,15 @@ void AUB_BotPetHealer::Tick(float DeltaTime)
 		if (CurrentTargetCharacter->IsDead() || CurrentTargetCharacter->GetHealthComponent()->HasFullHealth()) {
 			CurrentTargetCharacter = nullptr;
 		}
+		//Verify if it's sill in the control base area
+		if (IsValid(CurrentTargetCharacter) && IsValid(ControlBase)) {
+			float DistanceFromControlBase = (GetActorLocation() - ControlBase->GetActorLocation()).Size();
+			float DistanceOutOfControlBase = DistanceFromControlBase - ControlBase->GetControlRadius();
+			if (DistanceOutOfControlBase > 0.0f && DistanceOutOfControlBase > MaxDistanceOutOfControlBase) {
+				//is out of controlBase and should return to base, ignore this target
+				CurrentTargetCharacter = nullptr;
+			}
+		}
 	}
 
 	if (!IsValid(CurrentTargetCharacter)) {
@@ -163,19 +172,7 @@ void AUB_BotPetHealer::TickHealthRegeneration()
 FVector AUB_BotPetHealer::GetNextPathPoint()
 {
 	if (IsValid(CurrentTargetCharacter)) {
-		//Verify if it's sill in the control base area
-		if (IsValid(ControlBase)) {
-			float DistanceFromControlBase = (GetActorLocation() - ControlBase->GetActorLocation()).Size();
-			float DistanceOutOfControlBase = DistanceFromControlBase - ControlBase->GetControlRadius();
-			if (DistanceOutOfControlBase > 0.0f && DistanceOutOfControlBase > MaxDistanceOutOfControlBase) { 
-				//is out of controlBase and should return to base, ignore this target
-				CurrentTargetCharacter = nullptr;
-			}
-		}
-		
-		if (IsValid(CurrentTargetCharacter)) { //if it's still valid
-			return Super::GetNextPathPoint(); //go to this target
-		}
+		return Super::GetNextPathPoint(); //go to this target
 	}
 
 	//if not, then go to the base

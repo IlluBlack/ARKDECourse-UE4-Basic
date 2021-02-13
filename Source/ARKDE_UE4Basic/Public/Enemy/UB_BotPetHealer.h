@@ -22,7 +22,7 @@ class ARKDE_UE4BASIC_API AUB_BotPetHealer : public AUB_BotPet
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USphereComponent* HealthRegenerationAreaComponent;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UParticleSystemComponent* HealingParticlesComponent;
 
 protected:
