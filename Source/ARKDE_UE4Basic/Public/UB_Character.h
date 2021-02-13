@@ -252,6 +252,12 @@ public:
 	void SetSpeedModifier(float SpeedMod);
 	void SetSpeedModifierToDefault();
 
+	//Health
+	UFUNCTION(BlueprintCallable)
+	UUB_HealthComponent* GetHealthComponent() const { return HealthComponent; };
+
 	//Dead
-	bool ShouldDissapearWhenDead() { return bShouldDissapearWhenDead; };
+	UFUNCTION(BlueprintCallable)
+	bool IsDead() const;
+	bool ShouldDissapearWhenDead() const { return bShouldDissapearWhenDead; };
 };

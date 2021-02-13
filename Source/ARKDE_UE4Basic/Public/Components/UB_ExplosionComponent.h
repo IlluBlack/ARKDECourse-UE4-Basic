@@ -42,7 +42,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Explosion Component", meta = (ClampMin = "0.1", UIMin = "0.1"))
 	float ExplosionInnerRadius; //Radius of FullDamage
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Explosion Component", meta = (ClampMin = "0.2", UIMin = "0.2"))
-	float ExplosionOuterRadius; //It's the full explosion radius
+	float ExplosionOuterRadius; //Its the full explosion radius
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Explosion Component")
 	float ExplosionDelay;

@@ -7,7 +7,7 @@
 #include "UB_BotPet.generated.h"
 
 class USphereComponent;
-class USkeletalMeshComponent;
+class UStaticMeshComponent;
 class AUB_Character;
 class UUB_HealthComponent;
 class UUB_ExplosionComponent;
@@ -21,18 +21,13 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USphereComponent* MainColliderComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	USkeletalMeshComponent* BotMeshComponent;
+	UStaticMeshComponent* BotMeshComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UUB_HealthComponent* HealthComponent;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	USphereComponent* SelfDestructionDetectorComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UUB_ExplosionComponent* ExplosionComponent;
 
 protected:
-	UPROPERTY(BlueprintReadOnly, Category = "References")
-	AUB_Character* PlayerCharacter;
-
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	FVector NextPathPoint;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement|Debug")
@@ -43,14 +38,6 @@ protected:
 	float ForceMagnitude;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Self Destruction")
-	bool bStartedSelfDestructionCountdown;
-	FTimerHandle TimerHandle_SelfDestructionCountdown;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Self Destruction")
-	float SelfDestructionCountdownFrequency;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Self Destruction")
-	float SelfDestructionCountdownDamage;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Self Destruction")
 	bool bIsExploded;
 
 	UMaterialInstanceDynamic* BotMaterial;
@@ -58,6 +45,9 @@ protected:
 	FName MaterialTimeParameterName;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Material")
 	int MaterialIndex;
+
+	UPROPERTY(BlueprintReadOnly, Category = "References")
+	AUB_Character* CurrentTargetCharacter;
 
 public:
 	// Sets default values for this pawn's properties
@@ -68,21 +58,15 @@ protected:
 	virtual void BeginPlay() override;
 
 	UFUNCTION(BlueprintCallable, Category = "Navigation")
-	FVector GetNextPathPoint();
+	virtual FVector GetNextPathPoint();
+	void MoveToNextPathPoint();
 
 	UFUNCTION()
 	void OnHealthChanged(UUB_HealthComponent* CurrentHealthComponent, AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser);
 
-	UFUNCTION()
-	void OnOtherActorsDetection(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
-	void SelfDamage();
-
 	void SelfDestruction();
 	UFUNCTION()
 	void OnExplode(UUB_ExplosionComponent* CurrentExplosionComponent, const TArray<AActor*> OverlappedActors);
-
-	
 
 public:	
 	// Called every frame

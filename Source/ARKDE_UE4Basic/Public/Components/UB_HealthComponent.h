@@ -7,7 +7,7 @@
 #include "UB_HealthComponent.generated.h"
 
 //Delegate signature
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_SixParams(FOnHealthChangedSignature, UUB_HealthComponent*, HealthComponent, AActor*, DamagedActor, float, Damage, const UDamageType*, DamageType, AController*, InstigatedBy, AActor*, DamageCauser);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_SixParams(FOnHealthChangedSignature, UUB_HealthComponent*, HealthComponent, AActor*, AffectedActor, float, Value, const UDamageType*, DamageType, AController*, InstigatedBy, AActor*, ActorCauser);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class ARKDE_UE4BASIC_API UUB_HealthComponent : public UActorComponent
@@ -43,9 +43,17 @@ protected:
 
 	void ResetHealth();
 	UFUNCTION()
-	void NotifyOnTakeDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
+	void NotifyOnTakeDamage(AActor* AffectedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
 
 public:
+	UFUNCTION(BlueprintCallable)
+	float GetCurrentHealth() const { return Health; };
+	UFUNCTION(BlueprintCallable)
+	float HasFullHealth() const { return Health >= MaxHealth; };
+
+	UFUNCTION(BlueprintCallable)
+	void GiveHealth(float ExtraHealth, AController* InstigatedBy, AActor* ActorCauser);
+
 	UFUNCTION(BlueprintCallable)
 	bool IsDead() const { return bIsDead; };
 };

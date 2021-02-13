@@ -35,7 +35,12 @@ void UUB_ExplosionComponent::BeginPlay()
 void UUB_ExplosionComponent::StartExplosion(const TArray<AActor*> Ignore)
 {
 	IgnoreActors = Ignore;
-	GetWorld()->GetTimerManager().SetTimer(ExplosionDelayTimer, this, &UUB_ExplosionComponent::Explode, ExplosionDelay, false);
+	if (ExplosionDelay <= 0.0f) {
+		Explode();
+	}
+	else {
+		GetWorld()->GetTimerManager().SetTimer(ExplosionDelayTimer, this, &UUB_ExplosionComponent::Explode, ExplosionDelay, false);
+	}
 }
 
 void UUB_ExplosionComponent::Explode()
@@ -69,19 +74,24 @@ void UUB_ExplosionComponent::Explode()
 					float Distance = (ExplosionCenter - overlappedActor->GetActorLocation()).Size();
 					float DamageToApply;
 
-					if (Distance <= ExplosionInnerRadius) {
+					if (bHasFalloffExplosion) {
 						DamageToApply = ExplosionMaxDamage;
 					}
-					else if (Distance >= ExplosionOuterRadius) {
-						DamageToApply = ExplosionMinDamage;
-					}
-					else { //calculate de damage between explosionInnerRadius and explosionOuterRadius
-						float InsideRadiusRange = ExplosionOuterRadius - ExplosionInnerRadius;
+					else {
+						if (Distance <= ExplosionInnerRadius) {
+							DamageToApply = ExplosionMaxDamage;
+						}
+						else if (Distance >= ExplosionOuterRadius) {
+							DamageToApply = ExplosionMinDamage;
+						}
+						else { //calculate de damage between explosionInnerRadius and explosionOuterRadius
+							float InsideRadiusRange = ExplosionOuterRadius - ExplosionInnerRadius;
 
-						//distance in the range: 0 start, 1 end, this in order to lerp
-						float NormalizedDistance = ((Distance - ExplosionInnerRadius) / InsideRadiusRange);
-						DamageToApply = FMath::Lerp(ExplosionMaxDamage, ExplosionMinDamage, NormalizedDistance); //this is just a linear interpolation for calculate the damage
-						UE_LOG(LogTemp, Log, TEXT("Normalized Distance %f"), NormalizedDistance);
+							//distance in the range: 0 start, 1 end, this in order to lerp
+							float NormalizedDistance = ((Distance - ExplosionInnerRadius) / InsideRadiusRange);
+							DamageToApply = FMath::Lerp(ExplosionMaxDamage, ExplosionMinDamage, NormalizedDistance); //this is just a linear interpolation for calculate the damage
+							UE_LOG(LogTemp, Log, TEXT("Normalized Distance %f"), NormalizedDistance);
+						}
 					}
 
 					UE_LOG(LogTemp, Log, TEXT("Distance %f"), Distance);
@@ -103,13 +113,13 @@ void UUB_ExplosionComponent::Explode()
 
 			bool bAppliedDamage = false;
 			if (bHasFalloffExplosion) {
-				bAppliedDamage = UGameplayStatics::ApplyRadialDamage(GetWorld(), ExplosionMaxDamage, ExplosionCenter, ExplosionOuterRadius, DamageType,
-					IgnoreActors, Owner, Owner->GetInstigatorController(), true);
-			}
-			else {
 				bAppliedDamage = UGameplayStatics::ApplyRadialDamageWithFalloff(GetWorld(), ExplosionMaxDamage, ExplosionMinDamage, ExplosionCenter,
 					ExplosionInnerRadius, ExplosionOuterRadius, DamageFalloff, DamageType,
 					IgnoreActors, Owner, Owner->GetInstigatorController());
+			}
+			else {
+				bAppliedDamage = UGameplayStatics::ApplyRadialDamage(GetWorld(), ExplosionMaxDamage, ExplosionCenter, ExplosionOuterRadius, DamageType,
+					IgnoreActors, Owner, Owner->GetInstigatorController(), true);
 			}
 
 			UE_LOG(LogTemp, Log, TEXT("Applied damage %s"), bAppliedDamage ? TEXT("TRUE") : TEXT("FALSE"));

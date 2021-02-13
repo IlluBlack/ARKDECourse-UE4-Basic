@@ -535,6 +535,9 @@ void AUB_Character::OnHealthChanged(UUB_HealthComponent* CurrentHealthComponent,
 		}
 	}
 }
+bool AUB_Character::IsDead() const {
+	return HealthComponent->IsDead();
+}
 
 //Data
 void AUB_Character::VerifyData()

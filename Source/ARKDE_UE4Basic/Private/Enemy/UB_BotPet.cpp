@@ -7,7 +7,7 @@
 #include "Components/UB_ExplosionComponent.h"
 
 #include "Components/SphereComponent.h"
-#include "Components/SkeletalMeshComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Kismet/GameplayStatics.h"
 #include "NavigationSystem/Public/NavigationSystem.h"
@@ -23,22 +23,16 @@ AUB_BotPet::AUB_BotPet()
 
 	MainColliderComponent = CreateDefaultSubobject<USphereComponent>(TEXT("MainColliderComponent"));
 	RootComponent = MainColliderComponent;
-
 	MainColliderComponent->SetCanEverAffectNavigation(false);
 	MainColliderComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	MainColliderComponent->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
 	MainColliderComponent->SetSimulatePhysics(true);
 
-	BotMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("BotMeshComponent"));
+	BotMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BotMeshComponent"));
 	BotMeshComponent->SetupAttachment(MainColliderComponent);
+	BotMeshComponent->SetCanEverAffectNavigation(false);
 
 	HealthComponent = CreateDefaultSubobject<UUB_HealthComponent>(TEXT("HealthComponent"));
-
-	SelfDestructionDetectorComponent = CreateDefaultSubobject<USphereComponent>(TEXT("SelfDestructionDetectorComponent"));
-	SelfDestructionDetectorComponent->SetupAttachment(MainColliderComponent);
-	SelfDestructionDetectorComponent->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	SelfDestructionDetectorComponent->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
-	SelfDestructionDetectorComponent->SetSphereRadius(150.0f);
 
 	ExplosionComponent = CreateDefaultSubobject<UUB_ExplosionComponent>(TEXT("ExplosionComponent"));
 	ExplosionComponent->bHasFalloffExplosion = false;
@@ -48,9 +42,6 @@ AUB_BotPet::AUB_BotPet()
 
 	MinDistanceToTarget = 100.0f;
 	ForceMagnitude = 1000.0f;
-
-	SelfDestructionCountdownFrequency = 0.5f;
-	SelfDestructionCountdownDamage = 20.0f;
 
 	MaterialTimeParameterName = "Pulse";
 	MaterialIndex = 0;
@@ -63,18 +54,7 @@ void AUB_BotPet::BeginPlay()
 
 	BotMaterial = BotMeshComponent->CreateAndSetMaterialInstanceDynamicFromMaterial(MaterialIndex, BotMeshComponent->GetMaterial(MaterialIndex));
 	HealthComponent->OnHealthChangedDelegate.AddDynamic(this, &AUB_BotPet::OnHealthChanged);
-	SelfDestructionDetectorComponent->OnComponentBeginOverlap.AddDynamic(this, &AUB_BotPet::OnOtherActorsDetection);
 	ExplosionComponent->OnExplodeDelegate.AddDynamic(this, &AUB_BotPet::OnExplode);
-	
-	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-	if (IsValid(PlayerPawn)) {
-		PlayerCharacter = Cast<AUB_Character>(PlayerPawn);
-	}
-	else {
-		UE_LOG(LogTemp, Error, TEXT("PlayerPawn not found"));
-	}
-
-	NextPathPoint = GetNextPathPoint();
 }
 
 // Called every frame
@@ -88,11 +68,7 @@ void AUB_BotPet::Tick(float DeltaTime)
 		NextPathPoint = GetNextPathPoint();
 	}
 	else {
-		FVector ForceDirection = NextPathPoint - GetActorLocation();
-		ForceDirection.Normalize();
-		const FVector Force = ForceDirection * ForceMagnitude;
-
-		MainColliderComponent->AddForce(Force, NAME_None, true);
+		MoveToNextPathPoint();
 	}
 
 	if (bDrawNextPathPoint) {
@@ -103,14 +79,22 @@ void AUB_BotPet::Tick(float DeltaTime)
 //Navigation
 FVector AUB_BotPet::GetNextPathPoint()
 {
-	if (IsValid(PlayerCharacter)) {
-		UNavigationPath* NavigationPath = UNavigationSystemV1::FindPathToActorSynchronously(GetWorld(), GetActorLocation(), PlayerCharacter);
+	if (IsValid(CurrentTargetCharacter)) {
+		UNavigationPath* NavigationPath = UNavigationSystemV1::FindPathToActorSynchronously(GetWorld(), GetActorLocation(), CurrentTargetCharacter);
 		if (NavigationPath->PathPoints.Num() > 1) { //0 is always the StartPosition
 			return NavigationPath->PathPoints[1]; //nextPoint
 		}
 	}
 
 	return GetActorLocation();
+}
+void AUB_BotPet::MoveToNextPathPoint()
+{
+	FVector ForceDirection = NextPathPoint - GetActorLocation();
+	ForceDirection.Normalize();
+	const FVector Force = ForceDirection * ForceMagnitude;
+
+	MainColliderComponent->AddForce(Force, NAME_None, true);
 }
 
 //Taking damage
@@ -123,21 +107,6 @@ void AUB_BotPet::OnHealthChanged(UUB_HealthComponent* CurrentHealthComponent, AA
 	if (HealthComponent->IsDead()) {
 		SelfDestruction();
 	}
-}
-
-//SelfDestructionDetection
-void AUB_BotPet::OnOtherActorsDetection(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	if (OtherActor == PlayerCharacter) {
-		if (bStartedSelfDestructionCountdown) return;
-		bStartedSelfDestructionCountdown = true;
-
-		GetWorldTimerManager().SetTimer(TimerHandle_SelfDestructionCountdown, this, &AUB_BotPet::SelfDamage, SelfDestructionCountdownFrequency, true);
-	}
-}
-void AUB_BotPet::SelfDamage() 
-{
-	UGameplayStatics::ApplyDamage(this, SelfDestructionCountdownDamage, GetInstigatorController(), nullptr, nullptr);
 }
 
 //Destruction

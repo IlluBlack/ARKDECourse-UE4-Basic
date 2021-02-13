@@ -52,3 +52,15 @@ void UUB_HealthComponent::NotifyOnTakeDamage(AActor* DamagedActor, float Damage,
 	}
 }
 
+void UUB_HealthComponent::GiveHealth(float ExtraHealth, AController* InstigatedBy, AActor* ActorCauser)
+{
+	if (ExtraHealth <= 0.0f) return;
+
+	Health = FMath::Clamp(Health + ExtraHealth, 0.0f, MaxHealth);
+	OnHealthChangedDelegate.Broadcast(this, GetOwner(), Health * (-1), nullptr, InstigatedBy, ActorCauser);
+
+	if (bDebug) {
+		UE_LOG(LogTemp, Log, TEXT("My health is %s"), *FString::SanitizeFloat(Health));
+	}
+}
+
