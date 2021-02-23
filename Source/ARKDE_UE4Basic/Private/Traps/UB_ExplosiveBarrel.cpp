@@ -42,7 +42,7 @@ void AUB_ExplosiveBarrel::Tick(float DeltaTime)
 
 }
 
-void AUB_ExplosiveBarrel::OnHealthChanged(UUB_HealthComponent* CurrentHealthComponent, AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
+void AUB_ExplosiveBarrel::OnHealthChanged(UUB_HealthComponent* CurrentHealthComponent, AActor* DamagedActor, float Value, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
 {
 	if (HealthComponent->IsDead()) {
 		ExplosionComponent->StartExplosion(IgnoreActors);

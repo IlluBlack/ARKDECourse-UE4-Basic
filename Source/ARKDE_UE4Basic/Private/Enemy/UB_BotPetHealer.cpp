@@ -53,12 +53,12 @@ void AUB_BotPetHealer::BeginPlay()
 
 	bIsRegeneratingHealth = false;
 
-	if (IsValid(ControlBase)) {
+	/*if (IsValid(ControlBase)) {
 		ControlBase->SuscribeBotPet(this);
 	}
 	else {
 		UE_LOG(LogTemp, Error, TEXT("UBotPetHealer has no control base assigned, it will heal but not navigate"));
-	}
+	}*/
 }
 
 void AUB_BotPetHealer::Tick(float DeltaTime)
@@ -154,7 +154,7 @@ void AUB_BotPetHealer::TickHealthRegeneration()
 				bShouldRemoveCharacter = true;
 			}
 			else {
-				Character->GetHealthComponent()->GiveHealth(HealthRegenerationRate, GetInstigatorController(), this);
+				Character->TryGiveHealth(HealthRegenerationRate, GetInstigatorController(), this);
 			}
 		}
 		else {

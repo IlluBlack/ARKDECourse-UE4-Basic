@@ -98,7 +98,7 @@ void AUB_ProximityMine::ActivateMine()
 	ExplosionComponent->StartExplosion(IgnoreActors);
 }
 
-void AUB_ProximityMine::OnHealthChanged(UUB_HealthComponent* CurrentHealthComponent, AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
+void AUB_ProximityMine::OnHealthChanged(UUB_HealthComponent* CurrentHealthComponent, AActor* DamagedActor, float Value, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
 {
 	if (HealthComponent->IsDead()) {
 		ActivateMine();

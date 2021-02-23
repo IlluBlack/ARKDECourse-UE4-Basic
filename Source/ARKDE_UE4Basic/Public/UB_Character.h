@@ -201,7 +201,9 @@ protected:
 	void ChangeWeaponMode();
 
 	UFUNCTION()
-	void OnHealthChanged(UUB_HealthComponent* CurrentHealthComponent, AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser);
+	virtual void OnHealthChanged(UUB_HealthComponent* CurrentHealthComponent, AActor* DamagedActor, float Value, const UDamageType* DamageType, AController* InstigatedBy, AActor* ActorCauser);
+	UFUNCTION()
+	virtual void OnDead(AActor* ActorCauser);
 
 	void InitializeUltimate();
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
@@ -255,6 +257,7 @@ public:
 	//Health
 	UFUNCTION(BlueprintCallable)
 	UUB_HealthComponent* GetHealthComponent() const { return HealthComponent; };
+	bool TryGiveHealth(float ExtraHealth, AController* InstigatedBy = nullptr, AActor* ActorCauser = nullptr);
 
 	//Dead
 	UFUNCTION(BlueprintCallable)

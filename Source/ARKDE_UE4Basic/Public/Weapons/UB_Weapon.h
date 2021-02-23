@@ -93,6 +93,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SetCharacterOwner(AUB_Character* NewOwner);
+	UFUNCTION(BlueprintCallable)
+	AUB_Character* GetOwnerCharacter() const { return CurrentOwnerCharacter; };
 
 	//Animation notifiers that are called from character or anim notifiers
 	virtual void OnFinishedAction() {}

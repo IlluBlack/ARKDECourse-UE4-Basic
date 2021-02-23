@@ -3,16 +3,27 @@
 
 #include "UB_BotPetControlBase.h"
 #include "UB_Character.h"
+#include "Enemy/UB_BotPet.h"
 
+#include "Components/BillboardComponent.h"
 #include "DrawDebugHelpers.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Engine/Classes/Engine/World.h"
+#include "Engine/Public/TimerManager.h"
+#include "Engine/Classes/Kismet/KismetMathLibrary.h"
 
 // Sets default values
 AUB_BotPetControlBase::AUB_BotPetControlBase()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	SpawnerBillboardComponent = CreateDefaultSubobject<UBillboardComponent>(TEXT("Spawner Billboard"));
+	RootComponent = SpawnerBillboardComponent;
+
+	bIsActive = true;
+	MaxBotsCounter = 1;
+	SpawnFrequency = 1.0f;
 
 	ControlRadius = 1000.0f;
 }
@@ -21,20 +32,48 @@ AUB_BotPetControlBase::AUB_BotPetControlBase()
 void AUB_BotPetControlBase::BeginPlay()
 {
 	Super::BeginPlay();
+
+	GetWorldTimerManager().SetTimer(TimerHandle_SpawnBot, this, &AUB_BotPetControlBase::SpawnBot, SpawnFrequency, true);
 	
 	if (bDebug) {
 		DrawDebugSphere(GetWorld(), GetActorLocation(), ControlRadius, 25, FColor::White, true, 5.0f, 0, 2.0f);
 	}
 }
 
-// Called every frame
-void AUB_BotPetControlBase::Tick(float DeltaTime)
+void AUB_BotPetControlBase::SpawnBot()
 {
-	Super::Tick(DeltaTime);
+	if (!bIsActive) return;
+	if (CurrentBotsCounter >= MaxBotsCounter) return;
+	if (IsValid(BotPetClass)) {
+		FVector SpawnPoint = GetSpawnPoint();
+		//FActorSpawnParameters SpawnParameters;
+		//SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		//AUB_BotPet* NewBot = GetWorld()->SpawnActor<AUB_BotPet>(BotPetClass, SpawnPoint, FRotator::ZeroRotator, SpawnParameters);
+
+		FTransform SpawnTransform = FTransform(FRotator::ZeroRotator, SpawnPoint);
+		AUB_BotPet* NewBot = GetWorld()->SpawnActorDeferred<AUB_BotPet>(BotPetClass, SpawnTransform);
+		SuscribeBotPet(NewBot);
+		NewBot->FinishSpawning(SpawnTransform);
+		CurrentBotsCounter++;
+	}
+}
+
+FVector AUB_BotPetControlBase::GetSpawnPoint()
+{
+	if (SpawnPoints.Num() > 0) {
+		int RandomIndex = FMath::RandRange(0, SpawnPoints.Num()-1);
+		return UKismetMathLibrary::TransformLocation(GetActorTransform(), SpawnPoints[RandomIndex]);
+	}
+	else{
+		return GetActorLocation();
+	}
 }
 
 void AUB_BotPetControlBase::SuscribeBotPet(AUB_BotPet* BotPetToControl)
 {
+	if (IsValid(BotPetToControl)) {
+		BotPetToControl->SetControlBase(this);
+	}
 	BotPetsControlled.Add(BotPetToControl);
 
 	if (BotPetsControlled.Num() > RestSeats.Num()) {
@@ -42,12 +81,22 @@ void AUB_BotPetControlBase::SuscribeBotPet(AUB_BotPet* BotPetToControl)
 	}
 }
 
+void AUB_BotPetControlBase::UnsubscribeBotPet(AUB_BotPet* BotPetToUnsubscribe)
+{
+	if (IsValid(BotPetToUnsubscribe)) {
+		BotPetToUnsubscribe->SetControlBase(nullptr);
+	}
+	BotPetsControlled.Remove(BotPetToUnsubscribe);
+	CurrentBotsCounter--;
+
+}
+
 FVector AUB_BotPetControlBase::GetLocationRestSeat(AUB_BotPet* BotPet)
 {
 	int indexBotPet;
 	if (BotPetsControlled.Find(BotPet, indexBotPet)) {
 		if (indexBotPet < RestSeats.Num()) {
-			return (GetActorLocation() + RestSeats[indexBotPet]); //each bot has its own restSeat
+			return UKismetMathLibrary::TransformLocation(GetActorTransform(), RestSeats[indexBotPet]); //each bot has its own restSeat
 		}
 		else {
 			UE_LOG(LogTemp, Error, TEXT("BotPetControlBase has no enough RestSeats for BotPetsControlled"));

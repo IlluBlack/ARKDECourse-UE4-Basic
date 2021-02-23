@@ -67,6 +67,7 @@ void AUB_Character::BeginPlay()
 	SetupCharacterMovement();
 
 	HealthComponent->OnHealthChangedDelegate.AddDynamic(this, &AUB_Character::OnHealthChanged);
+	HealthComponent->OnDeadDelegate.AddDynamic(this, &AUB_Character::OnDead);
 
 	//Always at the end
 	VerifyData();
@@ -527,13 +528,22 @@ void AUB_Character::PlaySectionAnimMontage(FName Section, const UAnimMontage* Mo
 }
 
 //Health
-void AUB_Character::OnHealthChanged(UUB_HealthComponent* CurrentHealthComponent, AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
+void AUB_Character::OnHealthChanged(UUB_HealthComponent* CurrentHealthComponent, AActor* DamagedActor, float Value, const UDamageType* DamageType, AController* InstigatedBy, AActor* ActorCauser)
 {
-	if (HealthComponent->IsDead() && GetCharacterType() == EUB_CharacterType::CharacterType_Player) {
+	//....
+}
+bool AUB_Character::TryGiveHealth(float ExtraHealth, AController* InstigatedBy, AActor* ActorCauser) {
+	return HealthComponent->TryGiveHealth(ExtraHealth, InstigatedBy, ActorCauser);
+}
+void AUB_Character::OnDead(AActor* ActorCauser)
+{
+	if (GetCharacterType() == EUB_CharacterType::CharacterType_Player) {
 		if (IsValid(GameModeReference)) {
 			GameModeReference->GameOver(this);
 		}
 	}
+
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 bool AUB_Character::IsDead() const {
 	return HealthComponent->IsDead();

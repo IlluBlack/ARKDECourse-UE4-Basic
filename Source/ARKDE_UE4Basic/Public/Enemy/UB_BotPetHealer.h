@@ -36,8 +36,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Health Regeneration")
 	bool bIsRegeneratingHealth;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Control Base")
-	AUB_BotPetControlBase* ControlBase;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Health Regeneration")
 	float MaxDistanceOutOfControlBase;
 

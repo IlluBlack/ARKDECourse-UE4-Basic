@@ -3,8 +3,11 @@
 
 #include "UB_BotPet.h"
 #include "UB_Character.h"
+#include "Enemy/UB_BotPetControlBase.h"
+#include "Weapons/UB_Weapon.h"
 #include "Components/UB_HealthComponent.h"
 #include "Components/UB_ExplosionComponent.h"
+#include "CollectableItems/UB_CollectableItem.h"
 
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -14,6 +17,7 @@
 #include "NavigationSystem/Public/NavigationPath.h"
 #include "Engine/Public/TimerManager.h"
 #include "DrawDebugHelpers.h"
+#include "Engine/World.h"
 
 // Sets default values
 AUB_BotPet::AUB_BotPet()
@@ -45,6 +49,9 @@ AUB_BotPet::AUB_BotPet()
 
 	MaterialTimeParameterName = "Pulse";
 	MaterialIndex = 0;
+
+	XPValue = 15.0f;
+	SpawnLootProbability = 100.0f;
 }
 
 // Called when the game starts or when spawned
@@ -53,7 +60,10 @@ void AUB_BotPet::BeginPlay()
 	Super::BeginPlay();
 
 	BotMaterial = BotMeshComponent->CreateAndSetMaterialInstanceDynamicFromMaterial(MaterialIndex, BotMeshComponent->GetMaterial(MaterialIndex));
+
 	HealthComponent->OnHealthChangedDelegate.AddDynamic(this, &AUB_BotPet::OnHealthChanged);
+	HealthComponent->OnDeadDelegate.AddDynamic(this, &AUB_BotPet::OnDead);
+
 	ExplosionComponent->OnExplodeDelegate.AddDynamic(this, &AUB_BotPet::OnExplode);
 }
 
@@ -74,6 +84,11 @@ void AUB_BotPet::Tick(float DeltaTime)
 	if (bDrawNextPathPoint) {
 		DrawDebugSphere(GetWorld(), NextPathPoint, 30.0f, 15.0f, FColor::Purple, false, 0.0f, 0, 1.0f);
 	}
+}
+
+void AUB_BotPet::SetControlBase(AUB_BotPetControlBase* NewControlBase)
+{
+	ControlBase = NewControlBase;
 }
 
 //Navigation
@@ -98,15 +113,29 @@ void AUB_BotPet::MoveToNextPathPoint()
 }
 
 //Taking damage
-void AUB_BotPet::OnHealthChanged(UUB_HealthComponent* CurrentHealthComponent, AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
+void AUB_BotPet::OnHealthChanged(UUB_HealthComponent* CurrentHealthComponent, AActor* DamagedActor, float Value, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
 {
-	if (IsValid(BotMaterial)) {
+	if (IsValid(BotMaterial) && Value < 0.0f) {
 		BotMaterial->SetScalarParameterValue(MaterialTimeParameterName, GetWorld()->TimeSeconds);
 	}
-
-	if (HealthComponent->IsDead()) {
-		SelfDestruction();
+}
+void AUB_BotPet::OnDead(AActor* ActorCauser)
+{
+	//Give Reward
+	AUB_Character* CharacterCauser = Cast<AUB_Character>(ActorCauser);
+	if (!IsValid(CharacterCauser)) {
+		AUB_Weapon* WeaponCauser = Cast<AUB_Weapon>(ActorCauser);
+		if (IsValid(WeaponCauser)) {
+			CharacterCauser = WeaponCauser->GetOwnerCharacter();
+		}
 	}
+
+	if (IsValid(CharacterCauser) && CharacterCauser->GetCharacterType() == EUB_CharacterType::CharacterType_Player) {
+		CharacterCauser->EarnUltimateXP(XPValue);
+		TrySpawnLoot();
+	}
+
+	SelfDestruction();
 }
 
 //Destruction
@@ -120,6 +149,26 @@ void AUB_BotPet::SelfDestruction()
 }
 void AUB_BotPet::OnExplode(UUB_ExplosionComponent* CurrentExplosionComponent, const TArray<AActor*> OverlappedActors)
 {
+	if (IsValid(ControlBase)) {
+		ControlBase->UnsubscribeBotPet(this);
+	}
 	Destroy();
+}
+
+//Loot
+bool AUB_BotPet::TrySpawnLoot()
+{
+	if (!IsValid(LootItemClass)) return false;
+
+	float SelectedProbability = FMath::RandRange(0.0f, 100.0f);
+	if (SelectedProbability <= SpawnLootProbability) {
+		FActorSpawnParameters SpawnParameters;
+		SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+		GetWorld()->SpawnActor<AUB_CollectableItem>(LootItemClass, GetActorLocation(), FRotator::ZeroRotator, SpawnParameters);
+		return true;
+	}
+
+	return false;
 }
 

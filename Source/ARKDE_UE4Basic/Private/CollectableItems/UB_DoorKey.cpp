@@ -4,6 +4,7 @@
 #include "UB_DoorKey.h"
 #include "UB_Character.h"
 #include "UB_CharacterInventory.h"
+
 #include "Components/StaticMeshComponent.h"
 
 AUB_DoorKey::AUB_DoorKey()
@@ -17,9 +18,10 @@ AUB_DoorKey::AUB_DoorKey()
 
 void AUB_DoorKey::Pickup(AUB_Character* PickupCharacter)
 {
-	//PickupCharacter->AddKey(KeyTag);
-	if (IsValid(PickupCharacter->Inventory)) {
-		PickupCharacter->Inventory->AddKey(KeyTag);
+	if (IsValid(PickupCharacter)) {
+		if (IsValid(PickupCharacter->Inventory)) {
+			PickupCharacter->Inventory->AddKey(KeyTag);
+		}
 	}
 
 	Super::Pickup(PickupCharacter);

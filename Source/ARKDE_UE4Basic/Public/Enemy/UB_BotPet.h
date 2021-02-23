@@ -11,6 +11,8 @@ class UStaticMeshComponent;
 class AUB_Character;
 class UUB_HealthComponent;
 class UUB_ExplosionComponent;
+class AUB_CollectableItem;
+class AUB_BotPetControlBase;
 
 UCLASS()
 class ARKDE_UE4BASIC_API AUB_BotPet : public APawn
@@ -49,6 +51,17 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "References")
 	AUB_Character* CurrentTargetCharacter;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ultimate XP")
+	float XPValue;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Loot Sytem")
+	TSubclassOf<AUB_CollectableItem> LootItemClass;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Loot Sytem")
+	float SpawnLootProbability;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Control Base")
+	AUB_BotPetControlBase* ControlBase;
+
 public:
 	// Sets default values for this pawn's properties
 	AUB_BotPet();
@@ -63,13 +76,19 @@ protected:
 
 	UFUNCTION()
 	void OnHealthChanged(UUB_HealthComponent* CurrentHealthComponent, AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser);
+	UFUNCTION()
+	virtual void OnDead(AActor* ActorCauser);
 
 	void SelfDestruction();
 	UFUNCTION()
 	void OnExplode(UUB_ExplosionComponent* CurrentExplosionComponent, const TArray<AActor*> OverlappedActors);
 
+	bool TrySpawnLoot();
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	void SetControlBase(AUB_BotPetControlBase* NewControlBase);
 
 };

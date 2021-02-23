@@ -8,6 +8,7 @@
 
 //Delegate signature
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_SixParams(FOnHealthChangedSignature, UUB_HealthComponent*, HealthComponent, AActor*, AffectedActor, float, Value, const UDamageType*, DamageType, AController*, InstigatedBy, AActor*, ActorCauser);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDeadSignature, AActor*, ActorCauser);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class ARKDE_UE4BASIC_API UUB_HealthComponent : public UActorComponent
@@ -32,6 +33,8 @@ public:
 	//Delegates
 	UPROPERTY(BlueprintAssignable)
 	FOnHealthChangedSignature OnHealthChangedDelegate;
+	UPROPERTY(BlueprintAssignable)
+	FOnDeadSignature OnDeadDelegate;
 
 public:	
 	// Sets default values for this component's properties
@@ -52,7 +55,7 @@ public:
 	float HasFullHealth() const { return Health >= MaxHealth; };
 
 	UFUNCTION(BlueprintCallable)
-	void GiveHealth(float ExtraHealth, AController* InstigatedBy, AActor* ActorCauser);
+	bool TryGiveHealth(float ExtraHealth, AController* InstigatedBy, AActor* ActorCauser);
 
 	UFUNCTION(BlueprintCallable)
 	bool IsDead() const { return bIsDead; };

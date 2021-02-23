@@ -42,9 +42,10 @@ void UUB_HealthComponent::NotifyOnTakeDamage(AActor* DamagedActor, float Damage,
 	Health = FMath::Clamp(Health - Damage, 0.0f, MaxHealth);
 	if (Health <= 0.0f) {
 		bIsDead = true;
+		OnDeadDelegate.Broadcast(DamageCauser);
 	}
 
-	OnHealthChangedDelegate.Broadcast(this, DamagedActor, Damage, DamageType, InstigatedBy, DamageCauser);
+	OnHealthChangedDelegate.Broadcast(this, DamagedActor, Damage * (-1), DamageType, InstigatedBy, DamageCauser);
 
 	if (bDebug) {
 		//UE_LOG(LogTemp, Log, TEXT("My health is %f"), Health);
@@ -52,15 +53,19 @@ void UUB_HealthComponent::NotifyOnTakeDamage(AActor* DamagedActor, float Damage,
 	}
 }
 
-void UUB_HealthComponent::GiveHealth(float ExtraHealth, AController* InstigatedBy, AActor* ActorCauser)
+bool UUB_HealthComponent::TryGiveHealth(float ExtraHealth, AController* InstigatedBy, AActor* ActorCauser)
 {
-	if (ExtraHealth <= 0.0f) return;
+	if (bIsDead) return false;
+	if (ExtraHealth <= 0.0f) return false;
+	if (Health == MaxHealth) return false;
 
 	Health = FMath::Clamp(Health + ExtraHealth, 0.0f, MaxHealth);
-	OnHealthChangedDelegate.Broadcast(this, GetOwner(), Health * (-1), nullptr, InstigatedBy, ActorCauser);
+	OnHealthChangedDelegate.Broadcast(this, GetOwner(), Health, nullptr, InstigatedBy, ActorCauser);
 
 	if (bDebug) {
 		UE_LOG(LogTemp, Log, TEXT("My health is %s"), *FString::SanitizeFloat(Health));
 	}
+
+	return true;
 }
 
