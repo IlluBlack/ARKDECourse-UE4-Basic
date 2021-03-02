@@ -26,6 +26,7 @@ AUB_BotPetControlBase::AUB_BotPetControlBase()
 	SpawnFrequency = 1.0f;
 
 	ControlRadius = 1000.0f;
+	SpawnLootProbability = 100.0f;
 }
 
 // Called when the game starts or when spawned
@@ -33,11 +34,25 @@ void AUB_BotPetControlBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	GetWorldTimerManager().SetTimer(TimerHandle_SpawnBot, this, &AUB_BotPetControlBase::SpawnBot, SpawnFrequency, true);
+	if (bIsActive) ActivateSpawner();
 	
 	if (bDebug) {
 		DrawDebugSphere(GetWorld(), GetActorLocation(), ControlRadius, 25, FColor::White, true, 5.0f, 0, 2.0f);
 	}
+}
+
+void AUB_BotPetControlBase::ActivateSpawner()
+{
+	if (bIsActive) return;
+	bIsActive = true;
+	GetWorldTimerManager().SetTimer(TimerHandle_SpawnBot, this, &AUB_BotPetControlBase::SpawnBot, SpawnFrequency, true);
+}
+
+void AUB_BotPetControlBase::DeactivateSpawner()
+{
+	if (!bIsActive) return;
+	bIsActive = false;
+	GetWorldTimerManager().ClearTimer(TimerHandle_SpawnBot);
 }
 
 void AUB_BotPetControlBase::SpawnBot()
@@ -51,10 +66,9 @@ void AUB_BotPetControlBase::SpawnBot()
 		//AUB_BotPet* NewBot = GetWorld()->SpawnActor<AUB_BotPet>(BotPetClass, SpawnPoint, FRotator::ZeroRotator, SpawnParameters);
 
 		FTransform SpawnTransform = FTransform(FRotator::ZeroRotator, SpawnPoint);
-		AUB_BotPet* NewBot = GetWorld()->SpawnActorDeferred<AUB_BotPet>(BotPetClass, SpawnTransform);
+		AUB_BotPet* NewBot = GetWorld()->SpawnActorDeferred<AUB_BotPet>(BotPetClass, SpawnTransform, nullptr, nullptr, ESpawnActorCollisionHandlingMethod::DontSpawnIfColliding);
 		SuscribeBotPet(NewBot);
 		NewBot->FinishSpawning(SpawnTransform);
-		CurrentBotsCounter++;
 	}
 }
 
@@ -73,8 +87,14 @@ void AUB_BotPetControlBase::SuscribeBotPet(AUB_BotPet* BotPetToControl)
 {
 	if (IsValid(BotPetToControl)) {
 		BotPetToControl->SetControlBase(this);
+
+		if (LootItemsClass.Num() > 0) { //override in  botPet
+			int RandomIndex = FMath::RandRange(0, LootItemsClass.Num() - 1);
+			BotPetToControl->OverrideLootSystem(LootItemsClass[RandomIndex], SpawnLootProbability);
+		}
 	}
 	BotPetsControlled.Add(BotPetToControl);
+	CurrentBotsCounter++;
 
 	if (BotPetsControlled.Num() > RestSeats.Num()) {
 		UE_LOG(LogTemp, Error, TEXT("BotPetControlBase has no enough RestSeats for BotPetsControlled"));

@@ -88,7 +88,9 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	virtual void Destroyed() override;
 
 	void SetControlBase(AUB_BotPetControlBase* NewControlBase);
+	void OverrideLootSystem(TSubclassOf<AUB_CollectableItem> NewLootItemClass, float NewSpawnLootProbability);
 
 };

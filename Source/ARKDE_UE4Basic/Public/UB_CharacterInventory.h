@@ -16,7 +16,7 @@ class ARKDE_UE4BASIC_API UUB_CharacterInventory : public UObject
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Keys")
-	TArray<FName> DoorKeys;
+	TArray<FName> Keys;
 
 public:
 	UUB_CharacterInventory();
@@ -24,5 +24,6 @@ public:
 public: 
 	void AddKey(FName NewKey);
 	bool HasKey(FName KeyTag);
+	bool TryUseKey(FName KeyTag);
 
 };

@@ -53,7 +53,7 @@ void AUB_Door::OnCollisionDetected(UPrimitiveComponent* OverlappedComponent, AAc
 
 		if (IsValid(OverlappedCharacter) && OverlappedCharacter->GetCharacterType() == EUB_CharacterType::CharacterType_Player) 
 		{
-			UUB_CharacterInventory* PlayerInventory = OverlappedCharacter->Inventory;
+			UUB_CharacterInventory* PlayerInventory = OverlappedCharacter->GetInventory();
 			if (IsValid(PlayerInventory)) {
 				if (PlayerInventory->HasKey(OpenWithKeyTag)) {
 					OpenDoor();

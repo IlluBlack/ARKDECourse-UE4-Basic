@@ -90,6 +90,11 @@ void AUB_BotPet::SetControlBase(AUB_BotPetControlBase* NewControlBase)
 {
 	ControlBase = NewControlBase;
 }
+void AUB_BotPet::OverrideLootSystem(TSubclassOf<AUB_CollectableItem> NewLootItemClass, float NewSpawnLootProbability)
+{
+	LootItemClass = NewLootItemClass;
+	SpawnLootProbability = NewSpawnLootProbability;
+}
 
 //Navigation
 FVector AUB_BotPet::GetNextPathPoint()
@@ -147,12 +152,14 @@ void AUB_BotPet::SelfDestruction()
 	ExplosionComponent->StartExplosion(IgnoreActors);
 	bIsExploded = true;
 }
-void AUB_BotPet::OnExplode(UUB_ExplosionComponent* CurrentExplosionComponent, const TArray<AActor*> OverlappedActors)
-{
+void AUB_BotPet::OnExplode(UUB_ExplosionComponent* CurrentExplosionComponent, const TArray<AActor*> OverlappedActors) {
+	Destroy();
+}
+
+void AUB_BotPet::Destroyed() {
 	if (IsValid(ControlBase)) {
 		ControlBase->UnsubscribeBotPet(this);
 	}
-	Destroy();
 }
 
 //Loot

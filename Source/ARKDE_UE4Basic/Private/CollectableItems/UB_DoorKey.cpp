@@ -19,8 +19,10 @@ AUB_DoorKey::AUB_DoorKey()
 void AUB_DoorKey::Pickup(AUB_Character* PickupCharacter)
 {
 	if (IsValid(PickupCharacter)) {
-		if (IsValid(PickupCharacter->Inventory)) {
-			PickupCharacter->Inventory->AddKey(KeyTag);
+		UUB_CharacterInventory* CharacterInventory = PickupCharacter->GetInventory();
+
+		if (IsValid(CharacterInventory)) {
+			CharacterInventory->AddKey(KeyTag);
 		}
 	}
 

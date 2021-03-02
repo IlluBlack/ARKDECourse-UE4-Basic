@@ -8,6 +8,7 @@
 
 class AUB_Character;
 class AUB_BotPet;
+class AUB_CollectableItem;
 class UBillboardComponent;
 
 UCLASS()
@@ -24,7 +25,7 @@ protected:
 	bool bIsActive;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawner", meta = (UIMin = 1, ClampMin = 1))
 	int MaxBotsCounter;
-	UPROPERTY(BlueprintReadOnly, Category = "Spawner")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spawner")
 	int CurrentBotsCounter;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawner")
 	float SpawnFrequency;
@@ -37,7 +38,13 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Control Base")
 	float ControlRadius;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Control Base")
 	TArray<AUB_BotPet*> BotPetsControlled;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Control Base|Loot")
+	TArray<TSubclassOf<AUB_CollectableItem>> LootItemsClass;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Control Base|Loot")
+	float SpawnLootProbability;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "RestSeats", meta = (MakeEditWidget = true))
 	TArray<FVector> RestSeats;
@@ -57,6 +64,9 @@ protected:
 	FVector GetSpawnPoint();
 
 public:
+	void ActivateSpawner();
+	void DeactivateSpawner();
+
 	void SuscribeBotPet(AUB_BotPet* BotPetToControl);
 	void UnsubscribeBotPet(AUB_BotPet* BotPetToUnsubscribe);
 	FVector GetLocationRestSeat(AUB_BotPet* BotPet);
@@ -65,5 +75,4 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	float GetControlRadius() const { return ControlRadius; };
-
 };

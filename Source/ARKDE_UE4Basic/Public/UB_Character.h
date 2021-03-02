@@ -17,6 +17,7 @@ class AUB_MeleeWeapon;
 class UAnimMontage;
 class UAnimInstance;
 class AUB_GameMode;
+class IUB_InteractiveItemInterface;
 
 UENUM(Blueprintable)
 enum class EUB_CharacterType : uint8
@@ -101,6 +102,8 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	TSubclassOf<UUB_CharacterInventory> InventoryClass;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
+	UUB_CharacterInventory* Inventory;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	FName WeaponSocketName; //at this moment all weapons are placed in thee same socket
@@ -130,12 +133,21 @@ protected:
 	bool bIsFullBodyAnimation; //use as flag to know if animMontage is FULL_BODY or not
 	FTimerHandle TimerHandle_FullBodyAnimation;
 
+	//Interact
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Interaction")
+	float MaxDistanceToInteract;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Interaction")
+	float TickInteractionFrequency;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Interaction|Debug")
+	bool bDebugInteractionLineTrace;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
+	bool bIsInteracting;
+	IUB_InteractiveItemInterface* InteractingWithItem;
+	FTimerHandle TimerHandle_Interaction;
+
 public:
 	UPROPERTY(VisibleAnywhere, Category = "Input")
 	bool bIsPressingWeaponAction;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
-	UUB_CharacterInventory* Inventory;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
 	AUB_Weapon* CurrentWeapon;
@@ -186,6 +198,11 @@ protected:
 	void ResolveMaxMovementSpeed(bool forceUpdate = false);
 	void ResolveMaxCrouchMovementSpeed();
 
+	void TickInteraction();
+	void StartInteraction();
+	void StopInteraction();
+	bool AimingAtInteractiveItem(IUB_InteractiveItemInterface*& InteractiveItem);
+
 	void CreateInventory();
 
 	void CreateInitialWeapon();
@@ -229,6 +246,10 @@ public:
 	//GetActorEyesViewPoint() is override for APawn and return in location GetPawnViewLocation() that is actually the eyes of the mesh player
 	//override this function to make eyesViewPoint locate in the current camera
 	virtual FVector GetPawnViewLocation() const override;
+
+	//Inventory
+	UFUNCTION(BlueprintCallable)
+	UUB_CharacterInventory* GetInventory() const { return Inventory; };
 
 	//Animation
 	float PlayAnimMontage(UAnimMontage* AnimMontage, bool bIsFullBody = false, float InPlayRate = 1.f, FName StartSectionName = NAME_None);

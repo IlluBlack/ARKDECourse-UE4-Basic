@@ -5,6 +5,8 @@
 #include "UB_Weapon.h"
 #include "UB_MeleeWeapon.h"
 #include "UB_CharacterUltimate.h"
+#include "ARKDE_UE4Basic.h"
+#include "InteractiveItems/UB_InteractiveItemInterface.h"
 
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -18,6 +20,7 @@
 #include "Engine/World.h"
 #include "Core/UB_GameMode.h"
 #include "Runtime/Engine/Public/TimerManager.h"
+#include "DrawDebugHelpers.h"
 
 // Sets default values
 AUB_Character::AUB_Character()
@@ -51,6 +54,9 @@ AUB_Character::AUB_Character()
 	bIsFullBodyAnimation = false;
 
 	Accuracy = 1.0f;
+
+	MaxDistanceToInteract = 20.0f;
+	TickInteractionFrequency = 0.2f;
 }
 
 // Called when the game starts or when spawned
@@ -68,6 +74,8 @@ void AUB_Character::BeginPlay()
 
 	HealthComponent->OnHealthChangedDelegate.AddDynamic(this, &AUB_Character::OnHealthChanged);
 	HealthComponent->OnDeadDelegate.AddDynamic(this, &AUB_Character::OnDead);
+
+	GetWorldTimerManager().SetTimer(TimerHandle_Interaction, this, &AUB_Character::TickInteraction, TickInteractionFrequency, true);
 
 	//Always at the end
 	VerifyData();
@@ -148,6 +156,9 @@ void AUB_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 
 	PlayerInputComponent->BindAction("Ultimate", IE_Pressed, this, &AUB_Character::StartUltimate);
 	//PlayerInputComponent->BindAction("Ultimate", IE_Released, this, &AUB_Character::StopUltimate);
+
+	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &AUB_Character::StartInteraction);
+	PlayerInputComponent->BindAction("Interact", IE_Released, this, &AUB_Character::StopInteraction);
 }
 
 //Move
@@ -325,6 +336,75 @@ void AUB_Character::ResolveMaxCrouchMovementSpeed()
 	}
 
 	GetCharacterMovement()->MaxWalkSpeedCrouched = currentMaxCrouchSpeed * SpeedModifier;
+}
+
+//Interaction
+void AUB_Character::TickInteraction()
+{
+	//TODO: Maybe show a message like 'press E'' when pointing to an interactiveObject...
+
+	//Validate if it's still focusing the object, if not cancel interaction
+	if (bIsInteracting && InteractingWithItem) {
+		IUB_InteractiveItemInterface* NewInteractingWith;
+		if (AimingAtInteractiveItem(NewInteractingWith)) {
+			if (NewInteractingWith != InteractingWithItem) {
+				StopInteraction();
+			}
+		}
+		else {
+			StopInteraction();
+		}
+	}
+}
+
+void AUB_Character::StartInteraction()
+{
+	bIsInteracting = AimingAtInteractiveItem(InteractingWithItem);
+	if (bIsInteracting && InteractingWithItem) {
+		InteractingWithItem->StartInteraction(this);
+	}
+}
+void AUB_Character::StopInteraction()
+{
+	if (bIsInteracting && InteractingWithItem) {
+		InteractingWithItem->StopInteraction(this);
+		bIsInteracting = false;
+	}
+}
+
+bool AUB_Character::AimingAtInteractiveItem(IUB_InteractiveItemInterface*& InteractiveItem)
+{
+	FHitResult HitResult;
+
+	FVector EyeLocation;
+	FRotator EyeRotation;
+	GetActorEyesViewPoint(EyeLocation, EyeRotation);
+
+	FVector AimDirection = EyeRotation.Vector();
+	FVector TraceEnd = EyeLocation + (AimDirection * MaxDistanceToInteract);
+
+	FCollisionQueryParams QueryParams;
+	if(IsValid(CurrentWeapon)) QueryParams.AddIgnoredActor(CurrentWeapon); //ignore my weapon
+	QueryParams.AddIgnoredActor(this); //ignore myself
+	QueryParams.bTraceComplex = true; //to be able to get more data, and more accurate collision
+
+	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, EyeLocation, TraceEnd, TCC_INTERACTION, QueryParams);
+
+	if (bHit) {
+		AActor* HitActor = HitResult.GetActor();
+		if (IsValid(HitActor)) {
+			InteractiveItem = Cast<IUB_InteractiveItemInterface>(HitActor);
+			if (InteractiveItem) {
+				return true;
+			}
+		}
+	}
+
+	if (bDebugInteractionLineTrace) {
+		DrawDebugLine(GetWorld(), EyeLocation, TraceEnd, FColor::Magenta, false, 1.0f, 0.0f, 1.0f);
+	}
+
+	return false;
 }
 
 //Launch
@@ -544,6 +624,7 @@ void AUB_Character::OnDead(AActor* ActorCauser)
 	}
 
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetWorldTimerManager().ClearTimer(TimerHandle_Interaction);
 }
 bool AUB_Character::IsDead() const {
 	return HealthComponent->IsDead();

@@ -9,6 +9,7 @@
 
 //Trace Collision Channels: TCC
 #define TCC_WEAPON ECC_GameTraceChannel2
+#define TCC_INTERACTION ECC_GameTraceChannel3
 
 //Actor Tags
 const FName TAG_ENEMY = "Enemy";
