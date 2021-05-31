@@ -31,28 +31,29 @@ void AUB_Rifle::Fire()
 		Owner->GetActorEyesViewPoint(EyeLocation, EyeRotation);
 
 		FVector ShotDirection = EyeRotation.Vector(); //it's the lookDirection
-		//FVector TraceEnd = EyeLocation + (ShotDirection * TraceLenght);
-		const float Spread = FMath::DegreesToRadians(MaxAngleBulletSpread * (1.0f - CurrentOwnerCharacter->Accuracy)); //if Accuracy is 1 Spread is zero
-		FVector TraceEnd = EyeLocation + (FMath::VRandCone(ShotDirection, Spread) * TraceLenght);
+		const float Spread = FMath::DegreesToRadians(MaxAngleBulletSpread * (1.0f - CurrentOwnerCharacter->Accuracy)); //if Accuracy is 1 spread is zero
+		ShotDirection = FMath::VRandCone(ShotDirection, Spread); //applying a random spread
+
+		FVector TraceEnd = EyeLocation + (ShotDirection * TraceLenght);
 
 		FCollisionQueryParams QueryParams;
-		QueryParams.AddIgnoredActor(this); //ignore my weapon collision
-		QueryParams.AddIgnoredActor(Owner); //ignore my owner collision
+		QueryParams.AddIgnoredActor(this);
+		QueryParams.AddIgnoredActor(Owner);
 		QueryParams.bTraceComplex = true; //to be able to get more data, and more accurate collision
-
-		bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, EyeLocation, TraceEnd, TCC_WEAPON, QueryParams);
 
 		FVector ResultTraceEnd = TraceEnd; //By default is the final point of the lineTrace if not collision
 
-		if (bHit) {
+		bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, EyeLocation, TraceEnd, TCC_WEAPON, QueryParams);
+		if (bHit) 
+		{
 			AActor* HitActor = HitResult.GetActor();
 			if (IsValid(HitActor)) {
 				UGameplayStatics::ApplyPointDamage(HitActor, Damage, ShotDirection, HitResult, Owner->GetInstigatorController(), this, DamageType);
-				UE_LOG(LogTemp, Log, TEXT("Hit another actor"));
+				//UE_LOG(LogTemp, Log, TEXT("Hit another actor"));
 			}
 
 			ResultTraceEnd = HitResult.ImpactPoint;
-			//Play ImpactEffect
+			//ImpactEffect
 			if (IsValid(ImpactEffect)) {
 				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactEffect, ResultTraceEnd, HitResult.ImpactNormal.Rotation());
 			}
@@ -64,10 +65,10 @@ void AUB_Rifle::Fire()
 
 		PlayMuzzleEffect();
 
-		//Play TraceEffect
-		if (IsValid(TraceEffect)) {
+		//TraceEffect
+		if (IsValid(TraceEffect)) 
+		{
 			UParticleSystemComponent* TraceComponent = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), TraceEffect, GetMuzzleSocketLocation());
-
 			if (IsValid(TraceComponent)) {
 				TraceComponent->SetVectorParameter(TraceEndParamName, ResultTraceEnd);
 			}

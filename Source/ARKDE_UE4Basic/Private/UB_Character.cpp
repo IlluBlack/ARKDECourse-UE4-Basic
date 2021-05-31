@@ -484,16 +484,12 @@ void AUB_Character::EquipWeapon(AUB_Weapon* Weapon) //TODO: Use later with 1 2 3
 //Weapon Action
 void AUB_Character::StartWeaponAction()
 {
-	bIsPressingWeaponAction = true;
-
 	if (IsValid(CurrentWeapon)) {
 		CurrentWeapon->StartAction(); //this method could change the action state
 	}
 }
 void AUB_Character::StopWeaponAction()
 {
-	bIsPressingWeaponAction = false;
-
 	if (IsValid(CurrentWeapon)) {
 		CurrentWeapon->StopAction();
 	}

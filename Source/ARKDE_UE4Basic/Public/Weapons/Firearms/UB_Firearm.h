@@ -13,7 +13,7 @@ UENUM(Blueprintable)
 enum class EUB_FireMode : uint8
 {
 	FireMode_SemiAutomatic	UMETA(displayName = "SemiAutomatic"),
-	FireMode_Automatic UMETA(displayName = "Automatic"),
+	FireMode_Automatic		UMETA(displayName = "Automatic"),
 	//Burst //TODO: Maybe add this later
 };
 
@@ -23,7 +23,7 @@ class ARKDE_UE4BASIC_API AUB_Firearm : public AUB_Weapon
 	GENERATED_BODY()
 
 protected:
-	//All weapons in this projects are skeletalMesh, then I am not using UStaticMesh
+	//All firearms in this projects are skeletalMesh, then I am not using UStaticMesh
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USkeletalMeshComponent* WeaponMeshComponent;
 
@@ -40,25 +40,23 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Firearm")
 	float FireRate;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Firearm")
-	float MagazineCapacity; //number of rounds bullets before having to reload
+	float MagazineCapacity;
 
+	FTimerHandle FireDelayTimer; //uses FireRate
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Firearm")
-	bool bIsFiring;
-	FTimerHandle FireDelayTimer; //use FireRate
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Firearm")
-	int RemainingAmmo; //how many bullets do I have left
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Firearm")
-	bool bIsReloading;
+	int RemainingAmmo;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Muzzle")
 	FName MuzzleSocketName;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
-	UParticleSystem* MuzzleEffect; //all fire arms should have a muzzle effect
+	UParticleSystem* MuzzleEffect;
 
+	//here and not in the character since reload animation can differ between firearms
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
-	UAnimMontage* ReloadAnimMontage; //we put this in this class and not the character because reload animation can differ between firearms
+	UAnimMontage* FireAnimMontage;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
+	UAnimMontage* ReloadAnimMontage;
 
 public:
 	AUB_Firearm();

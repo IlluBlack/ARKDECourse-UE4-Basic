@@ -45,12 +45,12 @@ void AUB_MeleeWeapon::EquipWeapon()
 //Primary Action is attack with the melee weapon
 void AUB_MeleeWeapon::StartAction()
 {
-	Super::StartAction();
-	if (bIsPunching) return; //TODO: Remove later, make work return work from base
+	if (CurrentState != EUB_WeaponState::State_Idle &&
+		CurrentState != EUB_WeaponState::State_Action) return;
 
 	//the melee collider is enabled in the anim notify
 	if (GetNumCombos() > 1) { //has combo animations
-		if (bIsAttacking) {
+		if (CurrentState == EUB_WeaponState::State_Action) { //isAttacking
 			if (bIsMeleeComboEnabled) {
 				if (CurrentStepMeleeCombo < (GetNumCombos() - 1)) { //-1 because the last anim has no next stepCombo
 					CurrentStepMeleeCombo++;
@@ -66,11 +66,11 @@ void AUB_MeleeWeapon::StartAction()
 		}
 	}
 	else {
-		if (bIsAttacking) return;
+		if (CurrentState == EUB_WeaponState::State_Action) return;
 	}
 
-	//Attack
-	bIsAttacking = true;
+	Super::StartAction();
+
 	//Update damage multiplier of the weapon
 	CurrentDamageMultiplier = StepComboDamageMultiplier * (CurrentStepMeleeCombo+1); //we use CurrentStepMeleeCombo+1 because currentStepMeleeCombo starts in zero
 	
@@ -85,22 +85,22 @@ void AUB_MeleeWeapon::StartAction()
 	}
 }
 
-//Called from anim notifier when finished
-void AUB_MeleeWeapon::OnFinishedAction()
-{
-	Super::OnFinishedAction();
-
-	bIsAttacking = false;
-}
-
 //Additional Action, at this moment nope animation
 void AUB_MeleeWeapon::StartAdditionalAction()
 {
-	Super::StartAdditionalAction();
-	if (bIsPunching) return; //TODO: Remove later, make work return work from base
+	if (CurrentState != EUB_WeaponState::State_Idle) return;
 
-	//Play a nope animation
+	//Play a nope animation, do not change state
 	PlayAnimMontageInOwner(CurrentOwnerCharacter->DenyAnimMontage);
+	BP_StartAdditionalAction();
+}
+
+//Punch action
+void AUB_MeleeWeapon::StartPunchAction()
+{
+	if (CurrentState == EUB_WeaponState::State_PunchAction) return;
+
+	Super::StartPunchAction();
 }
 
 //Melee Detector

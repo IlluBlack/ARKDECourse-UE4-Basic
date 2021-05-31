@@ -26,8 +26,6 @@ private:
 
 protected:
 	//Melee weapons can have combos or not, if meleeAnimMontages is > 1 then there is combos
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Melee")
-	bool bIsAttacking;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
 	bool bUseAnimMontageSections; //this means all animations comes from the same anim montage with different sections
 
@@ -66,9 +64,7 @@ public:
 
 	virtual void StartAction() override;
 	virtual void StartAdditionalAction() override;
-	
-	//Anim notifier
-	virtual void OnFinishedAction() override;
+	virtual void StartPunchAction() override;
 
 	//Melee detector
 	void EnableMeleeDetector(); //EnableCollider

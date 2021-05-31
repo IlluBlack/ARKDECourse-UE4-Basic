@@ -13,6 +13,15 @@ class USceneComponent;
 class UCapsuleComponent;
 class UAnimMontage;
 
+UENUM(Blueprintable)
+enum class EUB_WeaponState : uint8
+{
+	State_Idle				UMETA(displayName = "Idle"),
+	State_Action			UMETA(displayName = "Action"), //fire, attack
+	State_AdditionalAction	UMETA(displayName = "AdditionalAction"), //reload
+	State_PunchAction		UMETA(displayName = "PunchAction"),
+};
+
 UCLASS()
 class ARKDE_UE4BASIC_API AUB_Weapon : public AActor
 {
@@ -25,16 +34,19 @@ protected:
 	UCapsuleComponent* PunchDetectorComponent;
 
 protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
+	EUB_WeaponState CurrentState;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
+	bool bIsWeaponActionTriggered;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
 	float Damage;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	TSubclassOf<UDamageType> DamageType;
 
-	//Each weapon can be used for punch, even if it's not a melee weapon, it's damage is lower
+	//Each weapon can be used for punch, even if it's not a melee weapon
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Punch")
 	float PunchDamage;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Punch")
-	bool bIsPunching;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
 	UAnimMontage* PunchAnimMontage; //punch animation for this weapon
@@ -56,7 +68,7 @@ protected:
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Weapon")
 	void BP_StopAction();
 
-	//Secondary action, could be zoom
+	//TODO Secondary action, could be zoom
 
 	//Additional action, reload...
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Weapon")
@@ -75,7 +87,7 @@ public:
 
 	virtual void EquipWeapon(); //To reset variables inside the weapon or whatever needed
 
-	UFUNCTION(BlueprintCallable) //Don't put this UFUNCTION in classes that are inheriting
+	UFUNCTION(BlueprintCallable)
 	virtual void StartAction();
 	UFUNCTION(BlueprintCallable)
 	virtual void StopAction();
@@ -97,8 +109,8 @@ public:
 	AUB_Character* GetOwnerCharacter() const { return CurrentOwnerCharacter; };
 
 	//Animation notifiers that are called from character or anim notifiers
-	virtual void OnFinishedAction() {}
-	virtual void OnFinishedAdditionalAction() {}
+	virtual void OnFinishedAction();
+	virtual void OnFinishedAdditionalAction();
 	virtual void OnFinishedPunchAction(); //finished the critic part of punch action
 
 	virtual void EnablePunchDetector(); //EnableCollider

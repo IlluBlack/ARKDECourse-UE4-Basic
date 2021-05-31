@@ -32,11 +32,13 @@ AUB_Weapon::AUB_Weapon()
 void AUB_Weapon::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	PunchDetectorComponent->OnComponentBeginOverlap.AddDynamic(this, &AUB_Weapon::ApplyPunchDamage);
 }
 
-void AUB_Weapon::EquipWeapon() {
+void AUB_Weapon::EquipWeapon() 
+{
+	CurrentState = EUB_WeaponState::State_Idle;
 	SetupPunchDetector();
 }
 
@@ -59,35 +61,51 @@ void AUB_Weapon::Tick(float DeltaTime)
 }
 
 //Primary Action
-void AUB_Weapon::StartAction() 
+void AUB_Weapon::StartAction()
 {
-	if (bIsPunching) return;
+	//if (bIsPunching) return;
+	//if (CurrentState != EUB_WeaponState::State_Idle) return false;
+	//overrride and add validators if needed
+	bIsWeaponActionTriggered = true;
+	CurrentState = EUB_WeaponState::State_Action;
 	BP_StartAction();
 }
-void AUB_Weapon::StopAction() 
-{
-	if (bIsPunching) return;
+void AUB_Weapon::StopAction() {
+	bIsWeaponActionTriggered = false;
 	BP_StopAction();
+}
+//Called from anim notifier when finished
+void AUB_Weapon::OnFinishedAction() {
+	CurrentState = EUB_WeaponState::State_Idle;
 }
 
 //Additional Action
 void AUB_Weapon::StartAdditionalAction() 
 {
-	if (bIsPunching) return;
+	//if (bIsPunching) return;
+	//if (CurrentState != EUB_WeaponState::State_Idle) return false;
+
+	CurrentState = EUB_WeaponState::State_AdditionalAction;
 	BP_StartAdditionalAction();
+}
+void AUB_Weapon::OnFinishedAdditionalAction()
+{
+	CurrentState = EUB_WeaponState::State_Idle;
 }
 
 //Punch Action
 void AUB_Weapon::StartPunchAction()
 {
-	if (bIsPunching) return;
+	//if (bIsPunching) return;
+	//if (CurrentState != EUB_WeaponState::State_Idle) return false;
 
-	bIsPunching = true;
+	CurrentState = EUB_WeaponState::State_PunchAction;
 	PlayAnimMontageInOwner(PunchAnimMontage);
 }
 void AUB_Weapon::OnFinishedPunchAction()
 {
-	bIsPunching = false;
+	//bIsPunching = false;
+	CurrentState = EUB_WeaponState::State_Idle;
 }
 void AUB_Weapon::EnablePunchDetector()
 {
@@ -137,8 +155,3 @@ void AUB_Weapon::SetCharacterOwner(AUB_Character* NewOwner)
 		CurrentOwnerCharacter = NewOwner;
 	}
 }
-
-
-
-
-

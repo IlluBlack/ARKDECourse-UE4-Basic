@@ -158,9 +158,6 @@ protected:
 	FTimerHandle TimerHandle_Interaction;
 
 public:
-	UPROPERTY(VisibleAnywhere, Category = "Input")
-	bool bIsPressingWeaponAction;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
 	AUB_Weapon* CurrentWeapon;
 
