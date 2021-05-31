@@ -9,14 +9,13 @@
 class UParticleSystem;
 class UAnimMontage;
 
-UENUM(BlueprintType)
-enum class EFireMode : uint8
+UENUM(Blueprintable)
+enum class EUB_FireMode : uint8
 {
-	SemiAutomatic,
-	Automatic,
+	FireMode_SemiAutomatic	UMETA(displayName = "SemiAutomatic"),
+	FireMode_Automatic UMETA(displayName = "Automatic"),
 	//Burst //TODO: Maybe add this later
 };
-
 
 UCLASS()
 class ARKDE_UE4BASIC_API AUB_Firearm : public AUB_Weapon
@@ -30,7 +29,7 @@ protected:
 
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Firearm")
-	TArray<EFireMode> AvailableFireModes;
+	TArray<EUB_FireMode> AvailableFireModes;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Firearm")
 	int InitialFireModeIdx;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Firearm")
@@ -105,5 +104,5 @@ public:
 	//Anim notifier
 	virtual void OnFinishedAdditionalAction() override;
 
-	EFireMode GetCurrentFireMode();
+	EUB_FireMode GetCurrentFireMode();
 };

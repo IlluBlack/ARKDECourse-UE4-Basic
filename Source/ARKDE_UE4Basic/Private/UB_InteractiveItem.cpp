@@ -41,7 +41,7 @@ void AUB_InteractiveItem::FireInteraction(AActor* ActorInteracting) {
 	BP_FireInteraction(ActorInteracting);
 }
 
-void AUB_InteractiveItem::StartInteraction(AActor* ActorInteracting)
+void AUB_InteractiveItem::StartInteraction_Implementation(AActor* ActorInteracting)
 {
 	if (!CanStartInteraction(ActorInteracting)) return;
 
@@ -58,7 +58,7 @@ void AUB_InteractiveItem::StartInteraction(AActor* ActorInteracting)
 	Execute_BP_StartInteraction(this, ActorInteracting);
 }
 
-void AUB_InteractiveItem::StopInteraction(AActor* ActorInteracting)
+void AUB_InteractiveItem::StopInteraction_Implementation(AActor* ActorInteracting)
 {
 	if (!bIsInteracting) return;
 

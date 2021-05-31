@@ -17,7 +17,7 @@ AUB_Firearm::AUB_Firearm()
 
 	PunchDetectorComponent->SetupAttachment(WeaponMeshComponent);
 
-	AvailableFireModes = { EFireMode::SemiAutomatic };
+	AvailableFireModes = { EUB_FireMode::FireMode_SemiAutomatic };
 	InitialFireModeIdx = 0;
 
 	MaxAngleBulletSpread = 2.2f;
@@ -121,7 +121,7 @@ void AUB_Firearm::CancelFiring()
 void AUB_Firearm::VerifyAutomaticFire() //Verify if it's automatic weapon, and continue firing
 {
 	//Verify if it's automatic weapon, and continue firing
-	if (GetCurrentFireMode() == EFireMode::Automatic) {
+	if (GetCurrentFireMode() == EUB_FireMode::FireMode_Automatic) {
 		if (IsValid(CurrentOwnerCharacter)) {
 			if (CurrentOwnerCharacter->bIsPressingWeaponAction) {
 				StartAction();
@@ -187,7 +187,7 @@ void AUB_Firearm::ChangeWeaponMode() //change to the next one
 	SetFireMode(nextIdx);
 }
 
-EFireMode AUB_Firearm::GetCurrentFireMode()
+EUB_FireMode AUB_Firearm::GetCurrentFireMode()
 {
 	return AvailableFireModes[CurrentFireModeIdx];
 }

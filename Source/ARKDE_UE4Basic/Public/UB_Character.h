@@ -154,7 +154,7 @@ protected:
 	bool bDebugInteractionLineTrace;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
 	bool bIsInteracting;
-	IUB_InteractiveItemInterface* InteractingWithItem;
+	IUB_InteractiveItemInterface* AimingAtItem;
 	FTimerHandle TimerHandle_Interaction;
 
 public:
@@ -213,7 +213,7 @@ protected:
 	void TickInteraction();
 	void StartInteraction();
 	void StopInteraction();
-	bool AimingAtInteractiveItem(IUB_InteractiveItemInterface*& InteractiveItem);
+	bool IsAimingAtAnyInteractiveItem(IUB_InteractiveItemInterface*& InteractiveItem);
 
 	void CreateInventory();
 

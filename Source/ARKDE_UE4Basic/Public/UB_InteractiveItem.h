@@ -46,7 +46,7 @@ public:
 	//startfocus
 	//endfocus
 
-	virtual void StartInteraction(AActor* ActorInteracting) override;
-	virtual void StopInteraction(AActor* ActorInteracting) override;
+	virtual void StartInteraction_Implementation(AActor* ActorInteracting) override;
+	virtual void StopInteraction_Implementation(AActor* ActorInteracting) override;
 
 };

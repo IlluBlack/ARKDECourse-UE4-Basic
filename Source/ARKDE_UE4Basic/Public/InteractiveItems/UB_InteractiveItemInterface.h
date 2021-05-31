@@ -22,20 +22,21 @@ class ARKDE_UE4BASIC_API IUB_InteractiveItemInterface
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
-	//UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interaction") //CANNOTT BE VIRTUAL
-	virtual void StartFocus() {};
-	//UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interaction")
-	virtual void StopFocus() {};
+	//BlueprintNativeEvent will allow adding this interface to BP
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interaction")
+	void StartHover();
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interaction")
+	void StopHover();
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
-	void BP_StartFocus();
+	void BP_StartHover();
 	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
-	void BP_StopFocus();
+	void BP_StopHover();
 
-	//UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interaction")
-	virtual void StartInteraction(AActor* ActorInteracting) {};
-	//UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interaction")
-	virtual void StopInteraction(AActor* ActorInteracting) {};
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interaction")
+	void StartInteraction(AActor* ActorInteracting);
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interaction")
+	void StopInteraction(AActor* ActorInteracting);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
 	void BP_StartInteraction(AActor* ActorInteracting);

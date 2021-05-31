@@ -353,37 +353,59 @@ void AUB_Character::ResolveMaxCrouchMovementSpeed()
 void AUB_Character::TickInteraction()
 {
 	//TODO: Maybe show a message like 'press E'' when pointing to an interactiveObject...
+	IUB_InteractiveItemInterface* NewAimingAt;
+	if (IsAimingAtAnyInteractiveItem(NewAimingAt)) {
+		if (NewAimingAt != AimingAtItem) 
+		{
+			StopInteraction();
+			if (AimingAtItem) {
+				IUB_InteractiveItemInterface::Execute_StopHover(Cast<UObject>(AimingAtItem));
+			}
+			if (NewAimingAt) {
+				IUB_InteractiveItemInterface::Execute_StartHover(Cast<UObject>(NewAimingAt));
+			}
+			AimingAtItem = NewAimingAt;
+		}
+	}
+	else {
+		if (AimingAtItem) {
+			IUB_InteractiveItemInterface::Execute_StopHover(Cast<UObject>(AimingAtItem));
+		}
+		StopInteraction();
+		AimingAtItem = nullptr;
+	}
 
 	//Validate if it's still focusing the object, if not cancel interaction
-	if (bIsInteracting && InteractingWithItem) {
-		IUB_InteractiveItemInterface* NewInteractingWith;
-		if (AimingAtInteractiveItem(NewInteractingWith)) {
-			if (NewInteractingWith != InteractingWithItem) {
+	/*if (bIsInteracting && AimingAtItem) {
+		IUB_InteractiveItemInterface* NewAimingAt;
+		if (IsAimingAtAnyInteractiveItem(NewAimingAt)) {
+			if (NewAimingAt != AimingAtItem) {
 				StopInteraction();
 			}
 		}
 		else {
 			StopInteraction();
 		}
-	}
+	}*/
 }
 
 void AUB_Character::StartInteraction()
 {
-	bIsInteracting = AimingAtInteractiveItem(InteractingWithItem);
-	if (bIsInteracting && InteractingWithItem) {
-		InteractingWithItem->StartInteraction(this);
+	bIsInteracting = IsAimingAtAnyInteractiveItem(AimingAtItem);
+	if (bIsInteracting && AimingAtItem) {
+		IUB_InteractiveItemInterface::Execute_StartInteraction(Cast<UObject>(AimingAtItem), this);
 	}
 }
 void AUB_Character::StopInteraction()
 {
-	if (bIsInteracting && InteractingWithItem) {
-		InteractingWithItem->StopInteraction(this);
+	if (bIsInteracting && AimingAtItem) {
+		//InteractingWithItem->Execute_StopInteraction(this);
+		IUB_InteractiveItemInterface::Execute_StopInteraction(Cast<UObject>(AimingAtItem), this);
 		bIsInteracting = false;
 	}
 }
 
-bool AUB_Character::AimingAtInteractiveItem(IUB_InteractiveItemInterface*& InteractiveItem)
+bool AUB_Character::IsAimingAtAnyInteractiveItem(IUB_InteractiveItemInterface*& InteractiveItem)
 {
 	FHitResult HitResult;
 
@@ -407,6 +429,11 @@ bool AUB_Character::AimingAtInteractiveItem(IUB_InteractiveItemInterface*& Inter
 			InteractiveItem = Cast<IUB_InteractiveItemInterface>(HitActor);
 			if (InteractiveItem) {
 				return true;
+			}
+			else { //if it comes from BP
+				if (HitActor->GetClass()->ImplementsInterface(UUB_InteractiveItemInterface::StaticClass())) {
+					return true;
+				}
 			}
 		}
 	}
