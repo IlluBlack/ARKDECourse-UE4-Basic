@@ -10,6 +10,8 @@ class UStaticMeshComponent;
 class UProjectileMovementComponent;
 class USphereComponent;
 
+class AUB_Character;
+
 UCLASS()
 class ARKDE_UE4BASIC_API AUB_Projectile : public AActor
 {
@@ -22,7 +24,10 @@ protected:
 	UStaticMeshComponent* ProjectileMeshComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UProjectileMovementComponent* ProjectileMovementComponent;
-	
+
+protected:
+	AUB_Character* CharacterOwner;
+
 public:	
 	// Sets default values for this actor's properties
 	AUB_Projectile();
@@ -35,7 +40,14 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	UFUNCTION(BlueprintCallable, Category = "Projectile")
-	virtual void Throw() {}
+	UFUNCTION(BlueprintCallable)
+	void SetCharacterOwner(AUB_Character* NewOwner);
 
+	UFUNCTION(BlueprintCallable)
+	float GetRadius() const;
+	UFUNCTION(BlueprintCallable)
+	void SetProjectileVelocity(FVector NewVelocity);
+
+	UFUNCTION(BlueprintCallable, Category = "Projectile")
+	virtual void Throw() {};
 };

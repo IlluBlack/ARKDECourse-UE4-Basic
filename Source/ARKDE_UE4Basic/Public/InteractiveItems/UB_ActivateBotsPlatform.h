@@ -2,17 +2,15 @@
 
 #pragma once
 
-#include "InteractiveItems/UB_InteractiveItemInterface.h"
-
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "UB_InteractiveItem.h"
 #include "UB_ActivateBotsPlatform.generated.h"
 
 class AUB_BotPetControlBase;
 class AUB_Character;
 
 UCLASS()
-class ARKDE_UE4BASIC_API AUB_ActivateBotsPlatform : public AActor, public IUB_InteractiveItemInterface
+class ARKDE_UE4BASIC_API AUB_ActivateBotsPlatform : public AUB_InteractiveItem
 {
 	GENERATED_BODY()
 
@@ -24,8 +22,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Deactivate Platform")
 	FName KeyTagToDeactivate;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Deactivate Platform")
-	float HoldTimeToDeactivate;
 
 public:	
 	// Sets default values for this actor's properties
@@ -43,14 +39,10 @@ protected:
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Deactivate Platform")
 	void BP_DeactivatePlatform();
 	
-	UFUNCTION()
-	void EndHoldInteraction(AUB_Character* CharacterInteracting);
+	virtual bool CanStartInteraction(AActor* ActorInteracting) override;
+	virtual void FireInteraction(AActor* ActorInteracting) override;
 
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
-	virtual void StartInteraction(AActor* ActorInteracting) override;
-	virtual void StopInteraction(AActor* ActorInteracting) override;
-
 };

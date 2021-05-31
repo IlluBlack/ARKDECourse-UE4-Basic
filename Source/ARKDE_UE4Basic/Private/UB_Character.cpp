@@ -7,6 +7,9 @@
 #include "UB_CharacterUltimate.h"
 #include "ARKDE_UE4Basic.h"
 #include "InteractiveItems/UB_InteractiveItemInterface.h"
+#include "Components/UB_HealthComponent.h"
+#include "Components/UB_ProjectileTrajectoryComponent.h"
+#include "Weapons/Projectiles/UB_projectile.h"
 
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -14,7 +17,7 @@
 #include "Components/InputComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "Components/UB_HealthComponent.h"
+#include "Components/SceneComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Animation/AnimInstance.h"
 #include "Engine/World.h"
@@ -43,6 +46,9 @@ AUB_Character::AUB_Character()
 
 	HealthComponent = CreateDefaultSubobject<UUB_HealthComponent>(TEXT("HealthComponent"));
 
+	DrawProjectiletTrajectoryComponent = CreateDefaultSubobject<UUB_ProjectileTrajectoryComponent>(TEXT("ProjectileTrajectoryComponent"));
+	ReferenceStartLocationThrow = CreateDefaultSubobject<USceneComponent>(TEXT("ReferenceStartLocationThrow"));
+
 	bUseHoldToSprint = true;
 	MaxRunSpeed = 800;
 	MaxSlideSpeed = 1200;
@@ -52,6 +58,8 @@ AUB_Character::AUB_Character()
 
 	WeaponSocketName = "SCK_Weapon";
 	bIsFullBodyAnimation = false;
+
+	ThrowSpeed = 2000.0f;
 
 	Accuracy = 1.0f;
 
@@ -153,6 +161,9 @@ void AUB_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 
 	PlayerInputComponent->BindAction("WeaponPunchAction", IE_Pressed, this, &AUB_Character::StartWeaponPunchAction);
 	//PlayerInputComponent->BindAction("WeaponPunchAction", IE_Released, this, &AUB_Character::StopWeaponPunchAction);
+
+	PlayerInputComponent->BindAction("ThrowAction", IE_Pressed, this, &AUB_Character::StartThrowAction);
+	PlayerInputComponent->BindAction("ThrowAction", IE_Released, this, &AUB_Character::StopThrowAction);
 
 	PlayerInputComponent->BindAction("Ultimate", IE_Pressed, this, &AUB_Character::StartUltimate);
 	//PlayerInputComponent->BindAction("Ultimate", IE_Released, this, &AUB_Character::StopUltimate);
@@ -483,6 +494,77 @@ void AUB_Character::ChangeWeaponMode()
 	if (IsValid(CurrentWeapon)) {
 		CurrentWeapon->ChangeWeaponMode();
 	}
+}
+
+//Throw Action
+void AUB_Character::StartThrowAction()
+{
+	if (!IsValid(InitialThrowableItemClass)) return;
+
+	float ProjectileRadius = 0.0f;
+	AUB_Projectile* ThrowableItemBase = InitialThrowableItemClass->GetDefaultObject<AUB_Projectile>();
+	if (IsValid(ThrowableItemBase)) {
+		ProjectileRadius = ThrowableItemBase->GetRadius();
+	}
+
+	const TArray<AActor*> IgnoreActors = { this, CurrentWeapon };
+
+	DrawProjectiletTrajectoryComponent->ShowTrajectoryPrediction(ThrowSpeed, ProjectileRadius, IgnoreActors);
+
+	/*FHitResult HitResult;
+	FOccluderVertexArray PathPoints;
+	FVector LastTraceDestination;
+
+	FVector StartPosition = GetActorLocation();
+
+	FVector EyeLocation;
+	FRotator EyeRotation;
+	GetActorEyesViewPoint(EyeLocation, EyeRotation);
+	FVector ThrowVelocity = EyeRotation.Vector() * ThrowSpeed;
+
+	AUB_ThrowableItem* ThrowableItemBase = InitialThrowableItemClass->GetDefaultObject<AUB_ThrowableItem>();
+	float ProjectileRadius = ThrowableItemBase->GetRadius();
+
+	const TArray<AActor*> IgnoreActors = { this, CurrentWeapon }; //grenade
+
+	bool bHit = UGameplayStatics::Blueprint_PredictProjectilePath_ByTraceChannel(GetWorld(), HitResult, PathPoints, LastTraceDestination, StartPosition, ThrowVelocity,
+		true, ProjectileRadius, ECollisionChannel::ECC_Visibility, false, IgnoreActors, EDrawDebugTrace::ForDuration, 3.0f);*/
+}
+void AUB_Character::StopThrowAction()
+{
+	if (!IsValid(InitialThrowableItemClass)) return;
+
+	DrawProjectiletTrajectoryComponent->HideTrajectoryPrediction();
+	ThrowItem();
+}
+void AUB_Character::ThrowItem()
+{
+	if (!IsValid(InitialThrowableItemClass)) return;
+
+	//at this moment we just instantiate an actor with the InitialThrowableItemClass, maybe in the future it could be the one equipped in the player
+	AUB_Projectile* ThrowItem = GetWorld()->SpawnActor<AUB_Projectile>(InitialThrowableItemClass, GetStartLocationThrow(), FRotator::ZeroRotator);
+	if (IsValid(ThrowItem)) {
+		ThrowItem->SetCharacterOwner(this);
+		ThrowItem->SetProjectileVelocity(GetThrowVelocity());
+		ThrowItem->Throw();
+	}
+	
+}
+FVector AUB_Character::GetStartLocationThrow() const {
+	//return ReferenceStartLocationThrow->GetComponentLocation();
+	//TODO use a socket or something
+	return GetActorLocation() + FVector(-100.0f, 100.0f, 100.0f);
+}
+FVector AUB_Character::GetThrowVelocity() const
+{
+	FVector EyeLocation;
+	FRotator EyeRotation;
+	GetActorEyesViewPoint(EyeLocation, EyeRotation);
+
+	FVector ThrowDirection = EyeRotation.Vector();
+
+	const FVector ThrowVelocity = ThrowDirection * ThrowSpeed;
+	return ThrowVelocity;
 }
 
 //Anim notifiers

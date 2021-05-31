@@ -18,6 +18,8 @@ class UAnimMontage;
 class UAnimInstance;
 class AUB_GameMode;
 class IUB_InteractiveItemInterface;
+class AUB_Projectile;
+class UUB_ProjectileTrajectoryComponent;
 
 UENUM(Blueprintable)
 enum class EUB_CharacterType : uint8
@@ -50,6 +52,11 @@ protected:
 	UCameraComponent* TPSCameraComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UUB_HealthComponent* HealthComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UUB_ProjectileTrajectoryComponent* DrawProjectiletTrajectoryComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	USceneComponent* ReferenceStartLocationThrow;
 
 //Variables
 private: //these ones are used just for internal logic
@@ -109,6 +116,11 @@ protected:
 	FName WeaponSocketName; //at this moment all weapons are placed in thee same socket
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	TSubclassOf<AUB_Weapon> InitialWeaponClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Throw")
+	TSubclassOf<AUB_Projectile> InitialThrowableItemClass;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Throw")
+	float ThrowSpeed;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ultimate")
 	TSubclassOf<AUB_CharacterUltimate> UltimateClass;
@@ -217,6 +229,10 @@ protected:
 	void StartWeaponPunchAction();
 	void ChangeWeaponMode();
 
+	void StartThrowAction();
+	void StopThrowAction();
+	void ThrowItem();
+
 	UFUNCTION()
 	virtual void OnHealthChanged(UUB_HealthComponent* CurrentHealthComponent, AActor* DamagedActor, float Value, const UDamageType* DamageType, AController* InstigatedBy, AActor* ActorCauser);
 	UFUNCTION()
@@ -267,6 +283,10 @@ public:
 	void ANEnableMeleeCombo();
 	UFUNCTION(BlueprintCallable)
 	void ANResetMeleeCombo();
+
+	//Throw
+	FVector GetStartLocationThrow() const;
+	FVector GetThrowVelocity() const;
 
 	//Ultimate
 	void EarnUltimateXP(float XP);

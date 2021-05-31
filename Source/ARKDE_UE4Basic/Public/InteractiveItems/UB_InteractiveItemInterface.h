@@ -20,20 +20,25 @@ class ARKDE_UE4BASIC_API IUB_InteractiveItemInterface
 {
 	GENERATED_BODY()
 
-protected:
-	bool bIsInteracting;
-	AActor* InteractingWith;
-	FTimerHandle TimerHandle_HoldInteraction;
-	FTimerDelegate TimerDelegate_HoldInteraction;
-
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
-	virtual void StartInteraction(AActor* ActorInteracting);
-	virtual void StopInteraction(AActor* ActorInteracting);
+	//UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interaction") //CANNOTT BE VIRTUAL
+	virtual void StartFocus() {};
+	//UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interaction")
+	virtual void StopFocus() {};
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
+	void BP_StartFocus();
+	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
+	void BP_StopFocus();
 
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interaction")
+	//UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interaction")
+	virtual void StartInteraction(AActor* ActorInteracting) {};
+	//UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interaction")
+	virtual void StopInteraction(AActor* ActorInteracting) {};
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
 	void BP_StartInteraction(AActor* ActorInteracting);
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interaction")
+	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
 	void BP_StopInteraction(AActor* ActorInteracting);
 };

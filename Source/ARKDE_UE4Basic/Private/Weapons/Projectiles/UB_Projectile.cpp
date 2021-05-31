@@ -2,6 +2,8 @@
 
 
 #include "UB_Projectile.h"
+#include "UB_Character.h"
+
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
@@ -40,5 +42,21 @@ void AUB_Projectile::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+void AUB_Projectile::SetCharacterOwner(AUB_Character* NewOwner)
+{
+	if (IsValid(NewOwner)) {
+		SetOwner(NewOwner);
+		CharacterOwner = NewOwner;
+	}
+}
+
+float AUB_Projectile::GetRadius() const {
+	return ProjectileCollider->GetScaledSphereRadius();
+}
+
+void AUB_Projectile::SetProjectileVelocity(FVector NewVelocity) {
+	ProjectileMovementComponent->Velocity = NewVelocity;
 }
 

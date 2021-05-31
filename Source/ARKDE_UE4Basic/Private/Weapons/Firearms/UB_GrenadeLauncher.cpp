@@ -23,7 +23,7 @@ void AUB_GrenadeLauncher::Fire()
 		//AUB_Projectile* CurrentProjectile = GetWorld()->SpawnActor<AUB_Projectile>(ProjectileClass, GetMuzzleSocketLocation(), GetMuzzleSocketRotation());
 
 		if (IsValid(CurrentProjectile)) {
-			CurrentProjectile->SetOwner(Owner);
+			CurrentProjectile->SetCharacterOwner(CurrentOwnerCharacter);
 			CurrentProjectile->Throw(); //Notify projectile was thrown
 
 			//TODO: override some caractheristics of this projectile?

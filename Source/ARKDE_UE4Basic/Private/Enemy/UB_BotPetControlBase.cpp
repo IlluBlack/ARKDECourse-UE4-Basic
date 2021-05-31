@@ -66,9 +66,11 @@ void AUB_BotPetControlBase::SpawnBot()
 		//AUB_BotPet* NewBot = GetWorld()->SpawnActor<AUB_BotPet>(BotPetClass, SpawnPoint, FRotator::ZeroRotator, SpawnParameters);
 
 		FTransform SpawnTransform = FTransform(FRotator::ZeroRotator, SpawnPoint);
-		AUB_BotPet* NewBot = GetWorld()->SpawnActorDeferred<AUB_BotPet>(BotPetClass, SpawnTransform, nullptr, nullptr, ESpawnActorCollisionHandlingMethod::DontSpawnIfColliding);
-		SuscribeBotPet(NewBot);
-		NewBot->FinishSpawning(SpawnTransform);
+		AUB_BotPet* NewBot = GetWorld()->SpawnActorDeferred<AUB_BotPet>(BotPetClass, SpawnTransform, nullptr, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+		if(IsValid(NewBot)){
+			SuscribeBotPet(NewBot);
+			NewBot->FinishSpawning(SpawnTransform);
+		}
 	}
 }
 
