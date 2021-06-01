@@ -52,7 +52,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	float GetCurrentHealth() const { return Health; };
 	UFUNCTION(BlueprintCallable)
-	float HasFullHealth() const { return Health >= MaxHealth; };
+	bool HasFullHealth() const { return Health >= MaxHealth; };
 
 	UFUNCTION(BlueprintCallable)
 	bool TryGiveHealth(float ExtraHealth, AController* InstigatedBy, AActor* ActorCauser);

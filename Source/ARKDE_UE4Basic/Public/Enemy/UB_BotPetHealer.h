@@ -11,6 +11,15 @@ class AUB_Character;
 class AUB_BotPetControlBase;
 class UParticleSystemComponent;
 
+UENUM(Blueprintable)
+enum class EUB_BotPetHealerState : uint8
+{
+	BotState_Idle				UMETA(displayName = "Idle"),
+	BotState_GoingToBase		UMETA(displayName = "Going to Base"),
+	BotState_FollowingTarget	UMETA(displayName = "Following Target"),
+	BotState_Healing			UMETA(displayName = "Healing"),
+};
+
 /**
  * 
  */
@@ -33,19 +42,19 @@ protected:
 
 	TArray<AUB_Character*> CharactersInRegenerationArea;
 	FTimerHandle TimerHandle_HealthRegeneration;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Health Regeneration")
-	bool bIsRegeneratingHealth;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Bot Pet")
+	EUB_BotPetHealerState CurrentState;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Health Regeneration")
 	float MaxDistanceOutOfControlBase;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "HealingParticles")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Healing Effect")
 	FName InternalRadiusParticlesParameterName;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "HealingParticles")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Healing Effect")
 	float InternalRadiusParticlesBaseUnit;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "HealingParticles")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Healing Effect")
 	FName ExternalRadiusParticlesParameterName;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "HealingParticles")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Healing Effect")
 	float ExternalRadiusParticlesBaseUnit;
 	
 public:
@@ -53,6 +62,8 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+
+	bool IsCharacterValidAsTarget(AUB_Character* Character);
 
 	UFUNCTION()
 	void OnOtherActorEnterRegenerationArea(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);

@@ -300,5 +300,6 @@ public:
 	//Dead
 	UFUNCTION(BlueprintCallable)
 	bool IsDead() const;
+	bool HasFullHealth() const;
 	bool ShouldDissapearWhenDead() const { return bShouldDissapearWhenDead; };
 };

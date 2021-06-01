@@ -65,6 +65,8 @@ void AUB_BotPet::BeginPlay()
 	HealthComponent->OnDeadDelegate.AddDynamic(this, &AUB_BotPet::OnDead);
 
 	ExplosionComponent->OnExplodeDelegate.AddDynamic(this, &AUB_BotPet::OnExplode);
+
+	NextPathPoint = GetNextPathPoint();
 }
 
 // Called every frame
@@ -146,11 +148,11 @@ void AUB_BotPet::OnDead(AActor* ActorCauser)
 //Destruction
 void AUB_BotPet::SelfDestruction()
 {
-	if (bIsExploded) return;
+	if (bHasExploded) return;
 
 	const TArray<AActor*> IgnoreActors = TArray<AActor*>{ this };
 	ExplosionComponent->StartExplosion(IgnoreActors);
-	bIsExploded = true;
+	bHasExploded = true;
 }
 void AUB_BotPet::OnExplode(UUB_ExplosionComponent* CurrentExplosionComponent, const TArray<AActor*> OverlappedActors) {
 	Destroy();

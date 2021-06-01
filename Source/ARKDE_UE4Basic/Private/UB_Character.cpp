@@ -734,6 +734,9 @@ void AUB_Character::OnDead(AActor* ActorCauser)
 bool AUB_Character::IsDead() const {
 	return HealthComponent->IsDead();
 }
+bool AUB_Character::HasFullHealth() const {
+	return HealthComponent->HasFullHealth();
+}
 
 //Data
 void AUB_Character::VerifyData()

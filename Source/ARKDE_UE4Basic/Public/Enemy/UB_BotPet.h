@@ -39,8 +39,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
 	float ForceMagnitude;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Self Destruction")
-	bool bIsExploded;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Self Destruction")
+	bool bHasExploded;
 
 	UMaterialInstanceDynamic* BotMaterial;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Material")

@@ -43,43 +43,25 @@ void AUB_BotPetHealer::BeginPlay()
 	HealthRegenerationAreaComponent->OnComponentBeginOverlap.AddDynamic(this, &AUB_BotPetHealer::OnOtherActorEnterRegenerationArea);
 	HealthRegenerationAreaComponent->OnComponentEndOverlap.AddDynamic(this, &AUB_BotPetHealer::OnOtherActorExitRegenerationArea);
 
+	//Particles
 	const float RadiusInternal = MainColliderComponent->GetScaledSphereRadius() * InternalRadiusParticlesBaseUnit;
 	HealingParticlesComponent->SetVectorParameter(InternalRadiusParticlesParameterName, FVector(RadiusInternal, RadiusInternal, RadiusInternal));
-	
 	const float RadiusExternal = HealthRegenerationAreaComponent->GetScaledSphereRadius() * ExternalRadiusParticlesBaseUnit;
 	HealingParticlesComponent->SetVectorParameter(ExternalRadiusParticlesParameterName, FVector(RadiusExternal, RadiusExternal, RadiusExternal));
 
 	HealingParticlesComponent->DeactivateSystem();
 
-	bIsRegeneratingHealth = false;
-
-	/*if (IsValid(ControlBase)) {
-		ControlBase->SuscribeBotPet(this);
-	}
-	else {
-		UE_LOG(LogTemp, Error, TEXT("UBotPetHealer has no control base assigned, it will heal but not navigate"));
-	}*/
+	CurrentState = EUB_BotPetHealerState::BotState_Idle;
 }
 
 void AUB_BotPetHealer::Tick(float DeltaTime)
 {
-	if (CharactersInRegenerationArea.Num() > 0) {
-		return; //do not move, and stay with characters around, just leave when noone around
+	if (CurrentState == EUB_BotPetHealerState::BotState_Healing) {
+		return; //do not move, and stay with character
 	}
 
-	if (IsValid(CurrentTargetCharacter)) {
-		if (CurrentTargetCharacter->IsDead() || CurrentTargetCharacter->GetHealthComponent()->HasFullHealth()) {
-			CurrentTargetCharacter = nullptr;
-		}
-		//Verify if it's sill in the control base area
-		if (IsValid(CurrentTargetCharacter) && IsValid(ControlBase)) {
-			float DistanceFromControlBase = (GetActorLocation() - ControlBase->GetActorLocation()).Size();
-			float DistanceOutOfControlBase = DistanceFromControlBase - ControlBase->GetControlRadius();
-			if (DistanceOutOfControlBase > 0.0f && DistanceOutOfControlBase > MaxDistanceOutOfControlBase) {
-				//is out of controlBase and should return to base, ignore this target
-				CurrentTargetCharacter = nullptr;
-			}
-		}
+	if (!IsCharacterValidAsTarget(CurrentTargetCharacter)) {
+		CurrentTargetCharacter = nullptr;
 	}
 
 	if (!IsValid(CurrentTargetCharacter)) {
@@ -92,18 +74,40 @@ void AUB_BotPetHealer::Tick(float DeltaTime)
 	if (DistanceToTarget > MinDistanceToTarget) { 
 		MoveToNextPathPoint();
 	}
+	else {
+		CurrentState = EUB_BotPetHealerState::BotState_Idle;
+	}
 
 	if (bDrawNextPathPoint) {
 		DrawDebugSphere(GetWorld(), NextPathPoint, 30.0f, 15.0f, FColor::Purple, false, 0.0f, 0, 1.0f);
 	}
 }
 
+bool AUB_BotPetHealer::IsCharacterValidAsTarget(AUB_Character* Character)
+{
+	if (!IsValid(Character)) return false;
+	if (Character->IsDead() || Character->HasFullHealth()) return false;
+
+	//Verify if character is still inside control base
+	if (IsValid(ControlBase)) {
+		const float DistanceFromControlBase = (Character->GetActorLocation() - ControlBase->GetActorLocation()).Size();
+		const float DistanceOutOfControlBase = DistanceFromControlBase - ControlBase->GetControlRadius();
+		if (DistanceOutOfControlBase > 0.0f && DistanceOutOfControlBase > MaxDistanceOutOfControlBase) {
+			//is out of controlBase not valid anymore
+			return false;
+		}
+	}
+
+	return true;
+}
+
+//Regeneration
 void AUB_BotPetHealer::OnOtherActorEnterRegenerationArea(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (IsValid(OtherActor)) {
 		AUB_Character* OtherCharacter = Cast<AUB_Character>(OtherActor);
 		if (IsValid(OtherCharacter)) {
-			if (!OtherCharacter->GetHealthComponent()->HasFullHealth()) {
+			if (!OtherCharacter->HasFullHealth() && !OtherCharacter->IsDead()) {
 				CharactersInRegenerationArea.Add(OtherCharacter);
 				VerifyHealthRegenerationTimer();
 			}
@@ -124,16 +128,17 @@ void AUB_BotPetHealer::OnOtherActorExitRegenerationArea(UPrimitiveComponent* Ove
 
 void AUB_BotPetHealer::VerifyHealthRegenerationTimer()
 {
-	if (CharactersInRegenerationArea.Num() > 0 && !bIsRegeneratingHealth) {
+	if (CurrentState != EUB_BotPetHealerState::BotState_Healing 
+		&& CharactersInRegenerationArea.Num() > 0) {
 		GetWorldTimerManager().SetTimer(TimerHandle_HealthRegeneration, this, &AUB_BotPetHealer::TickHealthRegeneration, HealthRegenerationFrequency, true);
-		bIsRegeneratingHealth = true;
-
+		
 		//Activate FX
 		HealingParticlesComponent->ActivateSystem();
 	}
-	else if (CharactersInRegenerationArea.Num() <= 0 && bIsRegeneratingHealth) {
+	else if (CurrentState == EUB_BotPetHealerState::BotState_Healing
+		&& CharactersInRegenerationArea.Num() <= 0) {
 		GetWorldTimerManager().ClearTimer(TimerHandle_HealthRegeneration);
-		bIsRegeneratingHealth = false;
+		CurrentState = EUB_BotPetHealerState::BotState_Idle;
 
 		//Deactivate Fx
 		HealingParticlesComponent->DeactivateSystem();
@@ -142,7 +147,7 @@ void AUB_BotPetHealer::VerifyHealthRegenerationTimer()
 
 void AUB_BotPetHealer::TickHealthRegeneration()
 {
-	bIsRegeneratingHealth = true;
+	CurrentState = EUB_BotPetHealerState::BotState_Healing;
 
 	//In reverse because it could remove an item while iterating
 	for (int idx = CharactersInRegenerationArea.Num() - 1; idx >= 0; idx--) {
@@ -150,7 +155,7 @@ void AUB_BotPetHealer::TickHealthRegeneration()
 
 		bool bShouldRemoveCharacter = false;
 		if (IsValid(Character)) {
-			if (Character->IsDead() || Character->GetHealthComponent()->HasFullHealth()) {
+			if (Character->IsDead() || Character->HasFullHealth()) {
 				bShouldRemoveCharacter = true;
 			}
 			else {
@@ -172,6 +177,7 @@ void AUB_BotPetHealer::TickHealthRegeneration()
 FVector AUB_BotPetHealer::GetNextPathPoint()
 {
 	if (IsValid(CurrentTargetCharacter)) {
+		CurrentState = EUB_BotPetHealerState::BotState_FollowingTarget;
 		return Super::GetNextPathPoint(); //go to this target
 	}
 
@@ -180,6 +186,7 @@ FVector AUB_BotPetHealer::GetNextPathPoint()
 		const FVector RestSeat = ControlBase->GetLocationRestSeat(this);
 		UNavigationPath* NavigationPath = UNavigationSystemV1::FindPathToLocationSynchronously(GetWorld(), GetActorLocation(), RestSeat);
 		if (NavigationPath->PathPoints.Num() > 1) { //0 is always the StartPosition
+			CurrentState = EUB_BotPetHealerState::BotState_GoingToBase;
 			return NavigationPath->PathPoints[1]; //nextPoint
 		}
 	}
@@ -189,7 +196,8 @@ FVector AUB_BotPetHealer::GetNextPathPoint()
 
 AUB_Character* AUB_BotPetHealer::GetNextCharacterNeedingHealth()
 {
-	if (IsValid(ControlBase)) {
+	if (IsValid(ControlBase)) 
+	{
 		const TArray<AUB_Character*> AvailableCharacters = ControlBase->GetCharactersInControlRadius();
 		if (AvailableCharacters.Num() <= 0) return nullptr;
 
@@ -198,7 +206,8 @@ AUB_Character* AUB_BotPetHealer::GetNextCharacterNeedingHealth()
 		for (AUB_Character* AvailableCharacter : AvailableCharacters)
 		{
 			if (!IsValid(AvailableCharacter)) continue;
-			if (AvailableCharacter->GetHealthComponent()->HasFullHealth()) continue;
+			if (AvailableCharacter->HasFullHealth()) continue;
+			if (AvailableCharacter->IsDead()) continue;
 
 			float PathLength;
 			UNavigationSystemV1::GetPathLength(GetWorld(), GetActorLocation(), AvailableCharacter->GetActorLocation(), PathLength);
