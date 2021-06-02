@@ -16,7 +16,6 @@ class ARKDE_UE4BASIC_API AUB_InteractiveItem : public AActor, public IUB_Interac
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
 	bool bIsInteracting;
-	//AActor* InteractingWith;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction")
 	float HoldTimeToFireInteraction;
@@ -43,10 +42,6 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	//startfocus
-	//endfocus
-
 	virtual void StartInteraction_Implementation(AActor* ActorInteracting) override;
 	virtual void StopInteraction_Implementation(AActor* ActorInteracting) override;
-
 };
