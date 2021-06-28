@@ -13,6 +13,10 @@ UCLASS()
 class ARKDE_UE4BASIC_API UUB_MainMenuWidget : public UUserWidget
 {
 	GENERATED_BODY()
+
+protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Main Menu")
+	FName GameplayMapName;
 	
 protected:
 	UFUNCTION(BlueprintCallable, Category = "Main Menu") //call from construct function

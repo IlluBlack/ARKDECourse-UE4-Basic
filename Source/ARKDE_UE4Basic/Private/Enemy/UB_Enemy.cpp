@@ -7,6 +7,7 @@
 #include "CollectableItems/UB_CollectableItem.h"
 #include "Enemy/UB_AICEnemy.h"
 #include "Components/UB_HealthComponent.h"
+#include "Core/UB_GameInstance.h"
 
 #include "Components/SkeletalMeshComponent.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -102,6 +103,9 @@ void AUB_Enemy::OnDead(AActor* ActorCauser)
 	if (IsValid(CharacterCauser) && CharacterCauser->GetCharacterType() == EUB_CharacterType::CharacterType_Player) {
 		CharacterCauser->EarnUltimateXP(XPValue);
 		TrySpawnLoot();
+		if (IsValid(GameInstanceReference)) {
+			GameInstanceReference->AddDefeatedEnemies();
+		}
 	}
 
 	if (IsValid(AIEnemyController)) {

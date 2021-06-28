@@ -13,6 +13,7 @@ class UUB_HealthComponent;
 class UUB_ExplosionComponent;
 class AUB_CollectableItem;
 class AUB_BotPetControlBase;
+class UUB_GameInstance;
 
 UCLASS()
 class ARKDE_UE4BASIC_API AUB_BotPet : public APawn
@@ -61,6 +62,8 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Control Base")
 	AUB_BotPetControlBase* ControlBase;
+
+	UUB_GameInstance* GameInstanceReference;
 
 public:
 	// Sets default values for this pawn's properties

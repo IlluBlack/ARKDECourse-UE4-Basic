@@ -20,6 +20,7 @@ class AUB_GameMode;
 class IUB_InteractiveItemInterface;
 class AUB_Projectile;
 class UUB_ProjectileTrajectoryComponent;
+class UUB_GameInstance;
 
 UENUM(Blueprintable)
 enum class EUB_CharacterType : uint8
@@ -136,6 +137,7 @@ protected:
 	float CurrentUltimateXP;
 
 	AUB_GameMode* GameModeReference;
+	UUB_GameInstance* GameInstanceReference;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Death")
 	bool bShouldDissapearWhenDead;
@@ -240,6 +242,8 @@ protected:
 	void BP_EarnUltimateXP(float XP);
 	void StartUltimate();
 	void ResetUltimateXP();
+
+	void PauseGame();
 
 	void ResetFullBodyAnimationFlag();
 

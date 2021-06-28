@@ -35,16 +35,21 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	void PauseGame(bool bNewState);
+
 	void SetupSpectatingCameras();
 	void MoveCameraToSpectatingPoint(AUB_Character* Character, AUB_SpectatingCamera* SpectatingCamera);
 	
 public:
 	void Victory(AUB_Character* Character);
 	void GameOver(AUB_Character* Character);
+	void TogglePauseGame();
 
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
 	void BP_Victory(AUB_Character* Character);
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
 	void BP_GameOver(AUB_Character* Character);
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
+	void BP_PauseGame(bool bNewState);
 	
 };

@@ -8,6 +8,7 @@
 #include "Components/UB_HealthComponent.h"
 #include "Components/UB_ExplosionComponent.h"
 #include "CollectableItems/UB_CollectableItem.h"
+#include "Core/UB_GameInstance.h"
 
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -59,6 +60,7 @@ void AUB_BotPet::BeginPlay()
 {
 	Super::BeginPlay();
 
+	GameInstanceReference = Cast<UUB_GameInstance>(GetWorld()->GetGameInstance());
 	BotMaterial = BotMeshComponent->CreateAndSetMaterialInstanceDynamicFromMaterial(MaterialIndex, BotMeshComponent->GetMaterial(MaterialIndex));
 
 	HealthComponent->OnHealthChangedDelegate.AddDynamic(this, &AUB_BotPet::OnHealthChanged);
@@ -140,6 +142,9 @@ void AUB_BotPet::OnDead(AActor* ActorCauser)
 	if (IsValid(CharacterCauser) && CharacterCauser->GetCharacterType() == EUB_CharacterType::CharacterType_Player) {
 		CharacterCauser->EarnUltimateXP(XPValue);
 		TrySpawnLoot();
+		if (IsValid(GameInstanceReference)) {
+			GameInstanceReference->AddDefeatedEnemies();
+		}
 	}
 
 	SelfDestruction();

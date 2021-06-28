@@ -10,6 +10,8 @@
 #include "Components/UB_HealthComponent.h"
 #include "Components/UB_ProjectileTrajectoryComponent.h"
 #include "Weapons/Projectiles/UB_projectile.h"
+#include "Core/UB_GameInstance.h"
+#include "Core/UB_GameMode.h"
 
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -21,7 +23,6 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Animation/AnimInstance.h"
 #include "Engine/World.h"
-#include "Core/UB_GameMode.h"
 #include "Runtime/Engine/Public/TimerManager.h"
 #include "DrawDebugHelpers.h"
 
@@ -92,6 +93,7 @@ void AUB_Character::BeginPlay()
 void AUB_Character::InitializeReferences()
 {
 	GameModeReference = Cast<AUB_GameMode>(GetWorld()->GetAuthGameMode());
+	GameInstanceReference = Cast<UUB_GameInstance>(GetWorld()->GetGameInstance());
 }
 
 void AUB_Character::SetupCharacterMovement()
@@ -170,6 +172,8 @@ void AUB_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 
 	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &AUB_Character::StartInteraction);
 	PlayerInputComponent->BindAction("Interact", IE_Released, this, &AUB_Character::StopInteraction);
+
+	PlayerInputComponent->BindAction("Pause", IE_Pressed, this, &AUB_Character::PauseGame).bExecuteWhenPaused = true;
 }
 
 //Move
@@ -673,7 +677,6 @@ void AUB_Character::ResetUltimateXP() {
 	CurrentUltimateXP = 0.0f;
 }
 
-
 //Speed modifier
 void AUB_Character::SetSpeedModifier(float SpeedMod) {
 	SpeedModifier = SpeedMod;
@@ -736,6 +739,14 @@ bool AUB_Character::IsDead() const {
 }
 bool AUB_Character::HasFullHealth() const {
 	return HealthComponent->HasFullHealth();
+}
+
+//General
+void AUB_Character::PauseGame()
+{
+	if (IsValid(GameModeReference)) {
+		GameModeReference->TogglePauseGame();
+	}
 }
 
 //Data

@@ -73,6 +73,28 @@ void AUB_GameMode::GameOver(AUB_Character* Character)
 	BP_GameOver(Character);
 }
 
+void AUB_GameMode::TogglePauseGame()
+{
+	APlayerController* const PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);;
+	if (IsValid(PlayerController)) {
+		if (PlayerController->IsPaused()) {
+			PauseGame(false);
+		}
+		else {
+			PauseGame(true);
+		}
+	}
+}
+
+void AUB_GameMode::PauseGame(bool bNewState)
+{
+	APlayerController* const PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);;
+	if (IsValid(PlayerController)) {
+		PlayerController->SetPause(bNewState);
+		BP_PauseGame(bNewState);
+	}
+}
+
 void AUB_GameMode::MoveCameraToSpectatingPoint(AUB_Character* Character, AUB_SpectatingCamera* SpectatingCamera)
 {
 	if (!IsValid(Character) || !IsValid(SpectatingCamera)) return;
